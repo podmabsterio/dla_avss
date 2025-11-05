@@ -6,8 +6,6 @@ import torch
 import torchaudio
 from torch.utils.data import Dataset
 
-from src.text_encoder import CTCTextEncoder
-
 logger = logging.getLogger(__name__)
 
 
@@ -159,7 +157,7 @@ class BaseDataset(Dataset):
         initial_size = len(index)
         if max_audio_length is not None:
             exceeds_audio_length = (
-                np.array([el["s1_length"] for el in index]) >= max_audio_length
+                np.array([el["len"] for el in index]) >= max_audio_length
             )
             _total = exceeds_audio_length.sum()
             logger.info(
@@ -219,7 +217,7 @@ class BaseDataset(Dataset):
                 of the dataset. The dict has required metadata information,
                 such as label and object path.
         """
-        return sorted(index, key=lambda x: x["s1_length"])
+        return sorted(index, key=lambda x: x["len"])
 
     @staticmethod
     def _shuffle_and_limit_index(index, limit, shuffle_index):

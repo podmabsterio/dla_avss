@@ -18,7 +18,7 @@ class AVSSDataset(BaseDataset):
             partition (str): partition name
             use_video_data (bool): if True tries to find video data in dataset directory
         """
-        index_path = ROOT_PATH / "data" / "avss_dataset" / partition / "index.json"
+        index_path = ROOT_PATH / "data" / "avss_dataset" / "audio" / partition / "index.json"
         dataset_path = Path(dataset_path)
         
         if not dataset_path.exists():
@@ -56,17 +56,23 @@ class AVSSDataset(BaseDataset):
         mouths_path = dataset_path / 'mouths'
 
         print("Creating index")
-        mix_files = [p for p in Path(mix_path).iterdir() if p.is_file()]
+        mix_files = [p for p in Path(mix_path).iterdir() if p.is_file() and not p.name.startswith('.')]
         
         for mix_file in tqdm(mix_files, total=len(mix_files), desc='Indexing files'):
             s1_file = s1_path / mix_file.name
             s2_file = s2_path / mix_file.name
             
-            if not s1_path.exists():  # TODO this dataset is not suitable for inference
-                raise FileNotFoundError("Can't find s2 file for following s1 file" + str(s2_file.resolve()))
+            if not s1_file.exists():  # TODO this dataset is not suitable for inference
+                raise FileNotFoundError("Can't find s1 file for following mix file\nmix file path:         " + \
+                                        str(mix_file.resolve()) + \
+                                        "\nexpected s1 file path: " + \
+                                        str(s1_file.resolve()))
             
             if not s2_file.exists():
-                raise FileNotFoundError("Can't find mix file for following s2 file" + str(s2_file.resolve()))
+                raise FileNotFoundError("Can't find s2 file for following mix file\nmix file path:         " + \
+                                        str(mix_file.resolve()) + \
+                                        "\nexpected s2 file path: " + \
+                                        str(s2_file.resolve()))
             
             s1_info = torchaudio.info(str(s1_file))
             s2_info = torchaudio.info(str(s2_file))

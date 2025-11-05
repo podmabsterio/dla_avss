@@ -24,7 +24,7 @@ def collate_fn(dataset_items: list[dict]):
     audio_pad = 0
 
     for item in dataset_items:
-        audio_lens.append(item['len'])
+        audio_lens.append(item['s1'].size(1))
         
         for part in parts:
             audios[part].append(item[part])
@@ -42,7 +42,7 @@ def collate_fn(dataset_items: list[dict]):
         audio_batch = torch.full((B, 1, L), fill_value=audio_pad, dtype=dtype)
         for i, a in enumerate(audios[part]):
             t = a.size(1)
-            audio_batch[i, 0, :t].copy_(a)
+            audio_batch[i, 0, :t].copy_(a.squeeze(0))
             
         result_batch[part] = audio_batch
         result_batch[f'{part}_paths'] = paths[part]
