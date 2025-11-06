@@ -17,7 +17,6 @@ class BaselineModel(nn.Module):
         super().__init__()
 
         self.net = Sequential(
-            # people say it can approximate any function...
             nn.Linear(in_features=n_feats, out_features=fc_hidden),
             nn.ReLU(),
             nn.Linear(in_features=fc_hidden, out_features=fc_hidden),
