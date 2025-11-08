@@ -12,7 +12,7 @@ class ConvBlock1D(nn.Module):
         padding,
         dilation=1
     ):
-        super(ConvBlock1D, self).__init__()
+        super().__init__()
         self.common_part = nn.Sequential(
             nn.Conv1d(
                 in_channels=input_channels,
@@ -68,7 +68,7 @@ class TCN(nn.Module):
         num_stacks,
         kernel_size=3,
     ):
-        super(TCN, self).__init__()
+        super().__init__()
         
         self.layer_norm = nn.GroupNorm(
             num_groups=1,
@@ -165,7 +165,20 @@ class ConvTasNet(BaseModel):
         return x, rest
 
     def forward(self, mix, **batch):
-        # mix: (B, 1, T)
+        """
+        Forward pass of Conv-TasNet.
+
+        Args:
+            mix (torch.Tensor): 
+                Input mixture waveform of shape (B, 1, T),
+                where B is the batch size and T is the number of samples.
+
+        Returns:
+            torch.Tensor:
+                Separated waveforms of shape (B, C, T),
+                where C is the number of estimated sources.
+        """
+
         mix, rest = self.pad_signal(mix)
         B = mix.size(0)
 
@@ -176,10 +189,11 @@ class ConvTasNet(BaseModel):
 
         masked = enc.unsqueeze(1) * masks  # (B, C, N, L)
         dec_in = masked.view(B * self.num_speakers, self.encoder_dim, -1)  # (B*C, N, L)
-        wav = self.decoder(dec_in)  # (B*C, 1, T')
+        preds = self.decoder(dec_in)  # (B*C, 1, T')
 
         if rest > 0:
-            wav = wav[:, :, :-rest]
+            preds = preds[:, :, :-rest]
 
-        wav = wav.view(B, self.num_speakers, -1)  # (B, C, T)
-        return wav
+        preds = preds.view(B, self.num_speakers, -1)  # (B, C, T)
+
+        return {"preds": preds}
