@@ -1,6 +1,6 @@
 import torch
 from torchmetrics.audio import PermutationInvariantTraining as PIT
-from torchmetrics.functional.audio import scale_invariant_signal_noise_ratio as si_sdr
+from torchmetrics.functional.audio import scale_invariant_signal_noise_ratio as si_snr
 from torchmetrics.functional.audio.pesq import (
     perceptual_evaluation_speech_quality as pesq,
 )
@@ -33,7 +33,13 @@ class PITMetric(BaseMetric):
 
 class PIT_SISNR(PITMetric):
     def __init__(self, *args, **kwargs):
-        super().__init__(si_sdr, *args, **kwargs)
+        super().__init__(si_snr, *args, **kwargs)
+        
+ 
+class PIT_SISNRi(PITMetric):
+    def __init__(self, *args, **kwargs):
+        si_snri = lambda mix, preds, target: si_snr(preds, target) - si_snr(mix, target)
+        super().__init__(si_snri, *args, **kwargs)
 
 
 class PIT_STOI(PITMetric):

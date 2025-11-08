@@ -1,0 +1,20 @@
+device: "auto"
+train:
+  - _target_: src.metrics.PIT_SISNRi
+    device: ${metrics.device}
+    name: "train_si_snri"
+inference:
+  - _target_: src.metrics.PIT_SISNRi
+    device: ${metrics.device}
+    name: "val_si_snri"
+  - _target_: src.metrics.PIT_SISNR
+    device: ${metrics.device}
+    name: "val_si_snr"
+  - _target_: src.metrics.PIT_PESQ
+    sample_rate: 16000
+    device: ${metrics.device}
+    name: "val_pesq"
+  - _target_: src.metrics.PIT_STOI
+    sample_rate: 16000
+    device: ${metrics.device}
+    name: "val_stoi"
