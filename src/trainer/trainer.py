@@ -7,6 +7,10 @@ class Trainer(BaseTrainer):
     Trainer class. Defines the logic of batch logging and processing.
     """
 
+    def __init__(self, *args, examples_to_log_on_val=5, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.examples_to_log_on_val = examples_to_log_on_val
+
     def process_batch(self, batch, metrics: MetricTracker):
         """
         Run batch through the model, compute metrics, compute loss,
@@ -71,7 +75,8 @@ class Trainer(BaseTrainer):
             self.log_only_mix(**batch)
         else:
             # Log Stuff
-            self.log_all_audios(**batch)
+            print("examples_to_log_on_val:", self.examples_to_log_on_val)
+            self.log_all_audios(examples_to_log=self.examples_to_log_on_val, **batch)
 
     def log_only_mix(self, mix, **batch):
         self.log_audio(mix, "mix")
@@ -87,4 +92,4 @@ class Trainer(BaseTrainer):
     def log_audio(self, audio, audio_name):
         audio_for_writer = audio.detach().cpu()
         sample_rate = self.sample_rate_for_logging
-        self.writer.add_audio("audio", audio_for_writer, sample_rate=sample_rate)
+        self.writer.add_audio(audio_name, audio_for_writer, sample_rate=sample_rate)

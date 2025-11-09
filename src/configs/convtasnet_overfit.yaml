@@ -1,10 +1,10 @@
 defaults:
-  - model: convtasnet_cpu
+  - model: convtasnet
   - writer: cometml
   - metrics: training
-  - datasets: example
+  - datasets: example_onebatchtest
   - dataloader: example
-  - transforms: no_transforms
+  - transforms: only_peak_normalization
   - _self_
 optimizer:
   _target_: torch.optim.AdamW
@@ -24,10 +24,11 @@ trainer:
   epoch_len: 500
   device_tensors: ["target", "mix"] # which tensors should be on device (ex. GPU)
   resume_from: null # null or path to the checkpoint dir with *.pth and config.yaml
-  device: cpu # device name or "auto"
+  device: cuda # device name or "auto"
   override: False # if True, will override the previous run with the same name
   monitor: "max val_si_snri" # "off" or "max/min metric_name", i.e. our goal is to maximize/minimize metric
   save_period: 5 # checkpoint each save_period epochs in addition to the best epoch
   early_stop: ${trainer.n_epochs} # epochs for early stopping
   save_dir: "saved"
+  examples_to_log_on_val: 1
   seed: 1

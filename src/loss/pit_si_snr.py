@@ -10,5 +10,5 @@ class PITSISNRLoss(Module):
             scale_invariant_signal_noise_ratio, mode="speaker-wise", eval_func="max"
         )
 
-    def forward(self, preds, target):
-        return -self.objective(preds, target)
+    def forward(self, preds, target, **batch):
+        return {"loss": -self.objective(preds, target)}

@@ -1,0 +1,6 @@
+train:
+  _target_: src.datasets.AVSSDataset
+  partition: train
+val:
+  _target_: src.datasets.AVSSDataset
+  partition: val
