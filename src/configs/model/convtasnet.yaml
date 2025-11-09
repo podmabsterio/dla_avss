@@ -1,0 +1,9 @@
+_target_: src.model.ConvTasNet
+encoder_dim: 512
+sample_rate: 16000
+slice_factor: 2
+tcn_bottleneck_dim: 128
+tcn_num_layers: 8
+tcn_num_stacks: 3
+tcn_kernel_size: 3
+num_speakers: 2

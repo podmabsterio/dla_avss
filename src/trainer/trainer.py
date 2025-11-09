@@ -7,6 +7,10 @@ class Trainer(BaseTrainer):
     Trainer class. Defines the logic of batch logging and processing.
     """
 
+    def __init__(self, *args, examples_to_log_on_val=5, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.examples_to_log_on_val = examples_to_log_on_val
+
     def process_batch(self, batch, metrics: MetricTracker):
         """
         Run batch through the model, compute metrics, compute loss,
@@ -67,13 +71,25 @@ class Trainer(BaseTrainer):
             mode (str): train or inference. Defines which logging
                 rules to apply.
         """
-        # method to log data from you batch
-        # such as audio, text or images, for example
-
-        # logging scheme might be different for different partitions
         if mode == "train":  # the method is called only every self.log_step steps
-            # Log Stuff
-            pass
+            self.log_only_mix(**batch)
         else:
             # Log Stuff
-            pass
+            print("examples_to_log_on_val:", self.examples_to_log_on_val)
+            self.log_all_audios(examples_to_log=self.examples_to_log_on_val, **batch)
+
+    def log_only_mix(self, mix, **batch):
+        self.log_audio(mix, "mix")
+
+    def log_all_audios(self, mix, preds, target, examples_to_log=5, **batch):
+        for i in range(examples_to_log):
+            self.log_audio(mix[i], f"mix_{i + 1}")
+            self.log_audio(preds[i, 0, :].unsqueeze(0), f"pred1_{i + 1}")
+            self.log_audio(preds[i, 1, :].unsqueeze(0), f"pred2_{i + 1}")
+            self.log_audio(target[i, 0, :].unsqueeze(0), f"target1_{i + 1}")
+            self.log_audio(target[i, 1, :].unsqueeze(0), f"target2_{i + 1}")
+
+    def log_audio(self, audio, audio_name):
+        audio_for_writer = audio.detach().cpu()
+        sample_rate = self.sample_rate_for_logging
+        self.writer.add_audio(audio_name, audio_for_writer, sample_rate=sample_rate)

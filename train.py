@@ -68,6 +68,7 @@ def main(config):
         writer=writer,
         batch_transforms=batch_transforms,
         skip_oom=config.trainer.get("skip_oom", True),
+        examples_to_log_on_val=config.trainer.get("examples_to_log_on_val"),
     )
 
     trainer.train()

@@ -1,0 +1,8 @@
+train:
+  _target_: src.datasets.AVSSDataset
+  partition: val
+  limit: 10
+val:
+  _target_: src.datasets.AVSSDataset
+  partition: val
+  limit: 10
