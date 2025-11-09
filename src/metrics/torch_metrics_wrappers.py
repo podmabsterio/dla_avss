@@ -37,6 +37,11 @@ class PIT_SISNR(PITMetric):
         super().__init__(si_snr, name, device)
 
 
+class PIT_SISDR(PITMetric):
+    def __init__(self, name, device):
+        super().__init__(si_sdr, name, device)
+
+
 class PIT_STOI(PITMetric):
     def __init__(self, sample_rate, name, device):
         params = dict(fs=sample_rate)
@@ -46,7 +51,7 @@ class PIT_STOI(PITMetric):
 class PIT_PESQ(PITMetric):
     def __init__(self, sample_rate, name, device, mode, n_processes):
         def pesq_wrapper(preds, target):
-            pesq(
+            return pesq(
                 preds, target, sample_rate, mode, n_processes=n_processes
             )  # because of collision of named params "mode" of PIT and pesq
 
@@ -63,4 +68,17 @@ class PIT_SISNRi(BaseMetric):
     ):
         return (
             self.pit_sisnr(preds, target) - si_snr(mix.expand(-1, 2, -1), target).mean()
+        )
+
+
+class PIT_SISDRi(BaseMetric):  # TODO fix copy paste
+    def __init__(self, name, device):
+        super().__init__(name)
+        self.pit_sisdr = PIT_SISDR(name, device)
+
+    def __call__(
+        self, mix: torch.Tensor, preds: torch.Tensor, target: torch.Tensor, **batch
+    ):
+        return (
+            self.pit_sisdr(preds, target) - si_sdr(mix.expand(-1, 2, -1), target).mean()
         )

@@ -7,6 +7,9 @@ inference:
   - _target_: src.metrics.PIT_SISNRi
     device: ${metrics.device}
     name: "si_snri"
+  - _target_: src.metrics.PIT_SISDRi
+    device: ${metrics.device}
+    name: "si_sdri"
   - _target_: src.metrics.PIT_SISNR
     device: ${metrics.device}
     name: "si_snr"

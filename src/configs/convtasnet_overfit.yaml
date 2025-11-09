@@ -2,7 +2,7 @@ defaults:
   - model: convtasnet
   - writer: cometml
   - metrics: training
-  - datasets: example_onebatchtest
+  - datasets: onebatchtest
   - dataloader: example
   - transforms: only_peak_normalization
   - _self_
