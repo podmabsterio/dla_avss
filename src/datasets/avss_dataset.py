@@ -93,8 +93,16 @@ class AVSSDataset(BaseDataset):
             }
             
             if use_video_data:
-                # TODO make index_element.update(...) with video fields
-                raise NotImplementedError('Videos are not supported')
+                mix_stem = mix_file.stem
+                for spk_id, stem in enumerate(mix_stem.split('_')):
+                    mouth_file = mouths_path / f'{stem}.npz'
+
+                    if not mouth_file.exists():
+                        raise FileNotFoundError(f"Can't find video of speaker {spk_id+1} for {mix_file.name}\n")
+
+                    index_element.update({
+                        f"s{spk_id+1}_mouth_path": str(mouth_file)
+                    })
             
             index.append(index_element)
             

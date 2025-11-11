@@ -93,8 +93,22 @@ class BaseDataset(Dataset):
             })
             
         if self.use_video_data:
-            # TODO make instance_data.update(...) with video fields
-            raise NotImplementedError('Videos are not supported')
+            for spk in ("s1", "s2"):
+                mouth_key = f"{spk}_mouth_path"
+                if mouth_key not in data_dict:
+                    raise KeyError(f"Missing '{mouth_key}' in index for item #{ind}")
+
+                mouth_path = data_dict[mouth_key]
+                npz = np.load(mouth_path)
+                frames = npz["data"]
+
+                video = torch.from_numpy(frames).unsqueeze(1)
+
+                instance_data.update({
+                    f"{spk}_video": video,
+                    mouth_key: mouth_path,
+                })
+
 
         instance_data = self.preprocess_data(instance_data)
 
@@ -200,8 +214,11 @@ class BaseDataset(Dataset):
             )
             
             if self.use_video_data:
-                # TODO make assert with video fields
-                raise NotImplementedError('Videos are not supported')
+                for part in ["s1", "s2"]:
+                    assert f"{part}_mouth_path" in entry, (
+                        f"When use video each dataset item should include field"
+                        f"'{part}_mouth_path' - path to {part} mouth file."
+                    )
 
     @staticmethod
     def _sort_index(index):

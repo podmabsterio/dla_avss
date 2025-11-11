@@ -19,7 +19,6 @@ class PeakNormalization(nn.Module):
             if key in item and item[key] is not None:
                 item[key] = item[key] * gain
 
-        # TODO: video normalization
         item[
             "normalization_gain"
         ] = gain  # if we want to invert normalization for inference
