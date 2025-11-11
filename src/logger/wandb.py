@@ -1,7 +1,6 @@
 from datetime import datetime
 
 import numpy as np
-import pandas as pd
 
 
 class WandBWriter:
@@ -206,19 +205,6 @@ class WandBWriter:
         hist = self.wandb.Histogram(np_histogram=np_hist)
 
         self.wandb.log({self._object_name(hist_name): hist}, step=self.step)
-
-    def add_table(self, table_name, table: pd.DataFrame):
-        """
-        Log table to the experiment tracker.
-
-        Args:
-            table_name (str): name of the table to use in the tracker.
-            table (DataFrame): table content.
-        """
-        self.wandb.log(
-            {self._object_name(table_name): self.wandb.Table(dataframe=table)},
-            step=self.step,
-        )
 
     def add_images(self, image_names, images):
         raise NotImplementedError()

@@ -55,7 +55,7 @@ class AVSSDataset(BaseDataset):
         
         mouths_path = dataset_path / 'mouths'
 
-        print("Creating index")
+        tqdm.write("Creating index...")
         mix_files = [p for p in Path(mix_path).iterdir() if p.is_file() and not p.name.startswith('.')]
         
         for mix_file in tqdm(mix_files, total=len(mix_files), desc='Indexing files'):

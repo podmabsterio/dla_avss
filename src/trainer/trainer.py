@@ -79,7 +79,7 @@ class Trainer(BaseTrainer):
             self.log_all_audios(examples_to_log=self.examples_to_log_on_val, **batch)
 
     def log_only_mix(self, mix, **batch):
-        self.log_audio(mix, "mix")
+        self.log_audio(mix[0], "mix")
 
     def log_all_audios(self, mix, preds, target, examples_to_log=5, **batch):
         for i in range(examples_to_log):

@@ -27,6 +27,7 @@ class BaseTrainer:
         dataloaders,
         logger,
         writer,
+        use_compile=False,
         epoch_len=None,
         skip_oom=True,
         batch_transforms=None,
@@ -66,7 +67,11 @@ class BaseTrainer:
         self.logger = logger
         self.log_step = config.trainer.get("log_step", 50)
 
-        self.model = model
+        if use_compile:
+            self.model = torch.compile(model)
+        else:
+            self.model = model
+
         self.criterion = criterion
         self.optimizer = optimizer
         self.lr_scheduler = lr_scheduler

@@ -1,8 +1,5 @@
 from datetime import datetime
 
-import numpy as np
-import pandas as pd
-
 
 class CometMLWriter:
     """
@@ -230,22 +227,6 @@ class CometMLWriter:
 
         self.exp.log_histogram_3d(
             values=values_for_hist, name=self._object_name(hist_name), step=self.step
-        )
-
-    def add_table(self, table_name, table: pd.DataFrame):
-        """
-        Log table to the experiment tracker.
-
-        Args:
-            table_name (str): name of the table to use in the tracker.
-            table (DataFrame): table content.
-        """
-        self.exp.set_step(self.step)
-        # log_table does not support step directly
-        self.exp.log_table(
-            filename=self._object_name(table_name) + ".csv",
-            tabular_data=table,
-            headers=True,
         )
 
     def add_images(self, image_names, images):

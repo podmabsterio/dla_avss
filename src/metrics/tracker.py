@@ -1,72 +1,60 @@
-import pandas as pd
-
-
 class MetricTracker:
     """
-    Class to aggregate metrics from many batches.
+    Class to aggregate metrics from many batches (without pandas).
     """
 
     def __init__(self, *keys, writer=None):
         """
         Args:
-            *keys (list[str]): list (as positional arguments) of metric
-                names (may include the names of losses)
-            writer (WandBWriter | CometMLWriter | None): experiment tracker.
-                Not used in this code version. Can be used to log metrics
-                from each batch.
+            *keys (list[str]): metric names (e.g. "loss", "accuracy").
+            writer (optional): experiment tracker (e.g. WandB, Comet).
         """
         self.writer = writer
-        self._data = pd.DataFrame(index=keys, columns=["total", "counts", "average"])
-        self.reset()
+        self._data = {key: {"total": 0.0, "counts": 0, "average": 0.0} for key in keys}
 
     def reset(self):
         """
-        Reset all metrics after epoch end.
+        Reset all stored metric values.
         """
-        for col in self._data.columns:
-            self._data[col].values[:] = 0
+        for key in self._data:
+            self._data[key]["total"] = 0.0
+            self._data[key]["counts"] = 0
+            self._data[key]["average"] = 0.0
 
     def update(self, key, value, n=1):
         """
-        Update metrics DataFrame with new value.
+        Update metric with new value.
 
         Args:
             key (str): metric name.
             value (float): metric value on the batch.
-            n (int): how many times to count this value.
+            n (int): number of samples for this batch.
         """
-        # if self.writer is not None:
-        #     self.writer.add_scalar(key, value)
-        self._data.loc[key, "total"] += value * n
-        self._data.loc[key, "counts"] += n
-        self._data.loc[key, "average"] = self._data.total[key] / self._data.counts[key]
+        if key not in self._data:
+            raise KeyError(f"Metric '{key}' not initialized in MetricTracker.")
+
+        self._data[key]["total"] += value * n
+        self._data[key]["counts"] += n
+        self._data[key]["average"] = self._data[key]["total"] / self._data[key]["counts"]
+
+        # Optional logging
+        if self.writer is not None:
+            self.writer.add_scalar(key, value)
 
     def avg(self, key):
         """
         Return average value for a given metric.
-
-        Args:
-            key (str): metric name.
-        Returns:
-            average_value (float): average value for the metric.
         """
-        return self._data.average[key]
+        return self._data[key]["average"]
 
     def result(self):
         """
-        Return average value of each metric.
-
-        Returns:
-            average_metrics (dict): dict, containing average metrics
-                for each metric name.
+        Return dict with average value of each metric.
         """
-        return dict(self._data.average)
+        return {key: vals["average"] for key, vals in self._data.items()}
 
     def keys(self):
         """
-        Return all metric names defined in the MetricTracker.
-
-        Returns:
-            metric_keys (Index): all metric names in the table.
+        Return all metric names.
         """
-        return self._data.total.keys()
+        return list(self._data.keys())

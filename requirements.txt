@@ -7,7 +7,6 @@ comet_ml
 hydra-core
 matplotlib
 omegaconf
-pandas
 Pillow
 torch_audiomentations
 torchmetrics[audio]
