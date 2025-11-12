@@ -6,11 +6,12 @@ class S3Block(nn.Module):
     def __init__(self):
         super().__init__()
 
-    def forward(y: torch.Tensor):
+    def forward(a_0, a_r: torch.Tensor):
         """
         Args:
-            y (torch.Tensor): video batch
+            a_0 (torch.Tensor): tensor a_0 from paper with shape (B, C_a, T_a, F)
+            a_r (torch.Tensor): tensor a_R from paper with shape (B, C_a, T_a, F)
         Outputs:
-            v (torch.Tensor): encoded video with shape (B, C_v, T_v)
+            z (torch.Tensor): tensor a_R from paper with shape (B, C_a, T_a, F)
         """
         raise NotImplementedError()

@@ -9,6 +9,8 @@ class RTFSBlock(nn.Module):
     def forward(a: torch.Tensor):
         """
         Args:
-            a (torch.Tensor): tensor A from paper with shape (B, C_a, T_a, F)
+            a_2 (torch.Tensor): tensor A from paper with shape (B, C_a, T_a, F)
+        Outputs:
+            a_R (torch.Tensor): tensor A'' from paper with shape (B, C_a, T_a, F)
         """
         raise NotImplementedError()
