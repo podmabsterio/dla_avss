@@ -14,7 +14,8 @@ tqdm
 wget
 scipy
 gdown
-
+sru # поднасрал нам в requirements (TODO удалить эту шутку)
+timm
 
 black
 isort
