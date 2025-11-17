@@ -4,6 +4,8 @@ import torch
 import torch.nn.functional as FF
 from torch import nn
 
+from timm.models.layers import DropPath
+
 
 def _conv_chain_out_size(dim_size, q):
     for i in range(q - 1):
@@ -17,117 +19,72 @@ def _conv_chain_out_size(dim_size, q):
     return dim_size
 
 
-# class SinusoidalPositionalEncoding(nn.Module):
-#     def __init__(self, d_model: int, max_len: int = 10000):
-#         super().__init__()
-#         pe = torch.zeros(max_len, d_model, requires_grad=False)
-#         position = torch.arange(0, max_len, dtype=torch.float32).unsqueeze(1)
-#         div_term = torch.exp(
-#             torch.arange(0, d_model, 2, dtype=torch.float32)
-#             * (-math.log(10000.0) / d_model)
-#         )
-#         pe[:, 0::2] = torch.sin(position * div_term)
-#         pe[:, 1::2] = torch.cos(position * div_term)
-#         self.register_buffer("pe", pe, persistent=False)
+class SinusoidalPositionalEncoding(nn.Module):
+    def __init__(self, channels: int, max_len: int = 32000):
+        super().__init__()
+        pe = torch.zeros(max_len, channels, requires_grad=False)
+        position = torch.arange(0, max_len, dtype=torch.float32).unsqueeze(1)
+        div_term = torch.exp(
+            torch.arange(0, channels, 2, dtype=torch.float32)
+            * (-math.log(10000.0) / channels)
+        )
+        pe[:, 0::2] = torch.sin(position * div_term)
+        pe[:, 1::2] = torch.cos(position * div_term)
 
-#     def forward(self, x):
-#         T = x.size(1)
-#         return x + self.pe[:T].unsqueeze(0)
+        self.register_buffer("pe", pe, persistent=False)
 
-
-# class MultiHeadSelfAttention(nn.Module):
-#     def __init__(
-#         self,
-#         in_chan: int,
-#         n_head: int = 8,
-#         dropout: int = 0.1,
-#         positional_encoding: bool = True,
-#         batch_first=True,
-#         *args,
-#         **kwargs,
-#     ):
-#         super(MultiHeadSelfAttention, self).__init__()
-#         self.in_chan = in_chan
-#         self.n_head = n_head
-#         self.dropout = dropout
-#         self.positional_encoding = positional_encoding
-#         self.batch_first = batch_first
-
-#         assert (
-#             self.in_chan % self.n_head == 0
-#         ), "In channels: {} must be divisible by the number of heads: {}".format(
-#             self.in_chan, self.n_head
-#         )
-
-#         self.norm1 = nn.LayerNorm(self.in_chan)
-#         self.pos_enc = (
-#             PositionalEncoding(self.in_chan)
-#             if self.positional_encoding
-#             else nn.Identity()
-#         )
-#         self.attention = nn.MultiheadAttention(
-#             self.in_chan, self.n_head, self.dropout, batch_first=self.batch_first
-#         )
-#         self.dropout_layer = nn.Dropout(self.dropout)
-#         self.norm2 = nn.LayerNorm(self.in_chan)
-#         self.drop_path_layer = DropPath(self.dropout)
-
-#     def forward(self, x: torch.Tensor):
-#         res = x
-#         if self.batch_first:
-#             x = x.transpose(1, 2)  # B, C, T -> B, T, C
-
-#         x = self.norm1(x)
-#         x = self.pos_enc(x)
-#         residual = x
-#         x = self.attention(x, x, x)[0]
-#         x = self.dropout_layer(x) + residual
-#         x = self.norm2(x)
-
-#         if self.batch_first:
-#             x = x.transpose(2, 1)  # B, T, C -> B, C, T
-
-#         x = self.drop_path_layer(x) + res
-#         return x
+    def forward(self, x):
+        T = x.size(1)
+        pos = self.pe[:T]
+        return x + pos.unsqueeze(0)
 
 
-# class GlobalAttention(nn.Module):
-#     def __init__(
-#         self,
-#         in_channels,
-#         hidden_channels,
-#         kernel_size,
-#         num_head,
-#         dropout,
-#     ):
-#         super(GlobalAttention, self).__init__()
 
-#         assert self.in_chan % self.n_head
+class GlobalAttention(nn.Module):
+    def __init__(
+        self,
+        in_channels,
+        hidden_channels,
+        kernel_size,
+        num_head,
+        dropout,
+    ):
+        super(GlobalAttention, self).__init__()
 
-#         self.ln1 = nn.LayerNorm(in_channels)
-#         self.pos_enc = (
-#             SinusoidalPositionalEncoding(self.in_chan)
-#             if self.positional_encoding
-#             else nn.Identity()
-#         )
-#         self.attention = nn.MultiheadAttention(
-#             self.in_chan, self.n_head, self.dropout, batch_first=self.batch_first
-#         )
-#         self.dropout_layer = nn.Dropout(self.dropout)
-#         self.norm2 = nn.LayerNorm(self.in_chan)
-#         self.drop_path_layer = DropPath(self.dropout)
+        assert in_channels % num_head == 0
 
-#         self.MHSA = nn.MultiHeadSelfAttention(
-#             self.in_chan, self.n_head, self.dropout, self.pos_enc
-#         )
-#         self.FFN = conv_layers.get(self.ffn_name)(
-#             self.in_chan, self.hid_chan, self.kernel_size, dropout=self.dropout
-#         )
+        self.ln1 = nn.LayerNorm(in_channels)
+        self.pos_enc = SinusoidalPositionalEncoding(in_channels)
+        self.attention = nn.MultiheadAttention(in_channels, num_head, dropout, batch_first=True)
+        self.dropout = nn.Dropout(dropout)
+        self.ln2 = nn.LayerNorm(in_channels)
+        self.droppath = DropPath(dropout)
+        self.ffn = nn.Sequential(
+            nn.Conv1d(in_channels, hidden_channels, 1),
+            nn.GroupNorm(num_channels=hidden_channels, num_groups=1),
+            nn.Conv1d(hidden_channels, hidden_channels, kernel_size, padding='same'),
+            nn.ReLU(),
+            DropPath(dropout),
+            nn.Conv1d(hidden_channels, in_channels, 1),
+            nn.GroupNorm(num_channels=in_channels, num_groups=1),
+            DropPath(dropout),
+        )
 
-#     def forward(self, x: torch.Tensor):
-#         x = self.MHSA(x)
-#         x = self.FFN(x)
-#         return x
+    def forward(self, x: torch.Tensor):
+        res = x
+        x = x.transpose(1, 2)
+        x = self.ln1(x)
+        x = self.pos_enc(x)
+        residual = x
+        x = self.attention(x, x, x)[0]
+        x = self.dropout(x) + residual
+        x = self.ln2(x)
+        x = x.transpose(2, 1)
+        x = self.droppath(x) + res
+        ffn_res = x
+        x = self.ffn(x) + ffn_res
+        
+        return x
 
 
 class CompressionModule1D(nn.Module):
@@ -163,7 +120,7 @@ class CompressionModule1D(nn.Module):
         a = self.prelu(a)
         q = len(self.compression_convs)
 
-        T_out = _conv_chain_out_size(a.shape[-2], q)
+        T_out = _conv_chain_out_size(a.shape[-1], q)
         downsampled = a
         compressed = 0
         downsampled_layers = []
@@ -246,14 +203,9 @@ class VPBlock(nn.Module):
         self,
         in_channels,
         hidden_channels,
-        rnn_hidden_channels,
         q,
-        num_rnn_layers,
-        rnn_kernel_size,
-        num_feats,
         num_heads,
         attn_hidden_channels,
-        use_sru=False,
     ):
         super().__init__()
         self.scaling_conv = nn.Conv1d(
@@ -265,6 +217,14 @@ class VPBlock(nn.Module):
         self.prelu = nn.PReLU()
         self.downsampling = CompressionModule1D(in_channels, hidden_channels, q)
 
+        self.attn = GlobalAttention(
+            in_channels=hidden_channels,
+            hidden_channels=attn_hidden_channels,
+            kernel_size=3,
+            num_head=num_heads,
+            dropout=0.1,
+        )
+        
         self.upsampling = ReconstructionModule1D(hidden_channels, q)
         self.upsampling_conv = nn.Conv1d(hidden_channels, in_channels, 1)
 
@@ -277,8 +237,6 @@ class VPBlock(nn.Module):
         """
         residual = self.prelu(self.scaling_conv(a))
         a, downsampled_layers = self.downsampling(residual)
-        a = self.dual_path1(a)
-        a = self.dual_path2(a)
         a = self.attn(a)
         a = self.upsampling(downsampled_layers, a)
         a = self.upsampling_conv(a)
