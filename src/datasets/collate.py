@@ -1,5 +1,4 @@
 import torch
-from torch.nn.utils.rnn import pad_sequence
 
 
 def collate_fn(dataset_items: list[dict]):
@@ -8,22 +7,19 @@ def collate_fn(dataset_items: list[dict]):
     Converts individual items into a batch.
 
     Args:
-        dataset_items (list[dict]): list of objects from
-            dataset.__getitem__.
-    Returns:
-        result_batch (dict[Tensor]): dict, containing batch-version
-            of the tensors.
-    """
+        dataset_items (list[dict]): list of objects from dataset.__getitem__.
 
-    parts = (
-        ["s1", "s2", "mix"] if "s1" in dataset_items[0] else ["mix"]
-    )  # for inference
+    Returns:
+        result_batch (dict[Tensor]): dict with batched tensors.
+    """
+    parts = ["s1", "s2", "mix"] if "s1" in dataset_items[0] else ["mix"]
 
     audios = {part: [] for part in parts}
-    paths = {part: [] for part in parts}
+    videos = {part: [] for part in parts}
+    audio_paths = {part: [] for part in parts}
+    video_paths = {part: [] for part in parts}
 
     audio_lens = []
-
     audio_pad = 0
 
     for item in dataset_items:
@@ -31,7 +27,17 @@ def collate_fn(dataset_items: list[dict]):
 
         for part in parts:
             audios[part].append(item[part])
-            paths[part].append(item[f"{part}_path"])
+            audio_paths[part].append(item[f"{part}_path"])
+
+            video_key = f"{part}_video"
+            mouth_path_key = f"{part}_mouth_path"
+
+            if video_key in item:
+                v = item[video_key]
+                assert v.shape == (50, 1, 96, 96), \
+                    f"Video shape {v.shape} != (50, 1, 96, 96)"
+                videos[part].append(v)
+                video_paths[part].append(item[mouth_path_key])
 
     L = int(max(audio_lens))
     B = len(dataset_items)
@@ -45,17 +51,22 @@ def collate_fn(dataset_items: list[dict]):
     for i, a in enumerate(audios["mix"]):
         t = a.size(1)
         mix_batch[i, 0, :t].copy_(a.squeeze(0))
+    result_batch["mix"] = mix_batch
 
     if "s1" in parts:
         target_batch = torch.full((B, 2, L), fill_value=audio_pad, dtype=dtype)
         for i, (s1, s2) in enumerate(zip(audios["s1"], audios["s2"])):
-            t = a.size(1)
+            t = s1.size(1)
             target_batch[i, 0, :t].copy_(s1.squeeze(0))
             target_batch[i, 1, :t].copy_(s2.squeeze(0))
+        result_batch["target"] = target_batch
 
-    result_batch["mix"] = mix_batch
-    result_batch["target"] = target_batch
     for part in parts:
-        result_batch[f"{part}_paths"] = paths[part]
+        result_batch[f"{part}_paths"] = audio_paths[part]
+
+    for part in parts:
+        if len(videos[part]) > 0:
+            result_batch[f"{part}_video"] = torch.stack(videos[part], dim=0)
+            result_batch[f"{part}_mouth_paths"] = video_paths[part]
 
     return result_batch
