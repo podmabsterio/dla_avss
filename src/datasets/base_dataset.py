@@ -46,12 +46,10 @@ class BaseDataset(Dataset):
                 tensor name.
         """
         self.use_video_data = use_video_data
-        
+
         self._assert_index_is_valid(index)
 
-        index = self._filter_records_from_dataset(
-            index, max_audio_length
-        )
+        index = self._filter_records_from_dataset(index, max_audio_length)
         index = self._shuffle_and_limit_index(index, limit, shuffle_index)
         if not shuffle_index:
             index = self._sort_index(index)
@@ -77,38 +75,53 @@ class BaseDataset(Dataset):
                 (a single dataset element).
         """
         data_dict = self._index[ind]
-        
-        instance_data = {
-            'len': data_dict['len']
-        }
-        
-        for part in ['s1', 's2', 'mix']:
+
+        instance_data = {"len": data_dict["len"]}
+
+        for part in ["s1", "s2", "mix"]:
             path_key = f"{part}_path"
             audio_path = data_dict[path_key]
             audio = self.load_audio(audio_path)
-            
-            instance_data.update({ # don't want to just copy data_dict because this may lead to bugs
-                part: audio,
-                path_key: audio_path
-            })
-            
+
+            instance_data.update(
+                {  # don't want to just copy data_dict because this may lead to bugs
+                    part: audio,
+                    path_key: audio_path,
+                }
+            )
+
         if self.use_video_data:
             for spk in ("s1", "s2"):
                 mouth_key = f"{spk}_mouth_path"
-                if mouth_key not in data_dict:
-                    raise KeyError(f"Missing '{mouth_key}' in index for item #{ind}")
+                emb_key = f"{spk}_video_emb_path"
 
-                mouth_path = data_dict[mouth_key]
-                npz = np.load(mouth_path)
-                frames = npz["data"]
+                if emb_key in data_dict:
+                    emb_path = data_dict[emb_key]
+                    emb = torch.load(emb_path)
 
-                video = torch.from_numpy(frames).unsqueeze(1)
+                    instance_data.update(
+                        {
+                            f"{spk}_video_emb": emb,
+                            emb_key: emb_path,
+                        }
+                    )
+                elif mouth_key in data_dict:
+                    mouth_path = data_dict[mouth_key]
+                    npz = np.load(mouth_path)
+                    frames = npz["data"]
 
-                instance_data.update({
-                    f"{spk}_video": video,
-                    mouth_key: mouth_path,
-                })
+                    video = torch.from_numpy(frames).unsqueeze(1)
 
+                    instance_data.update(
+                        {
+                            f"{spk}_video": video,
+                            mouth_key: mouth_path,
+                        }
+                    )
+                else:
+                    raise KeyError(
+                        f"Missing both '{mouth_key}' and '{emb_key}' in index for item #{ind}"
+                    )
 
         instance_data = self.preprocess_data(instance_data)
 
@@ -175,19 +188,21 @@ class BaseDataset(Dataset):
             )
             _total = exceeds_audio_length.sum()
             logger.info(
-                f"{_total} ({_total / initial_size:.1%}) records are longer then "
+                f"{_total} ({_total / initial_size:.1%}) records are longer then "  # noqa: E231
                 f"{max_audio_length} seconds. Excluding them."
             )
         else:
             exceeds_audio_length = False
 
-        records_to_filter = exceeds_audio_length  # TODO implement some video filtration if needed
+        records_to_filter = (
+            exceeds_audio_length  # TODO implement some video filtration if needed
+        )
 
         if records_to_filter is not False and records_to_filter.any():
             _total = records_to_filter.sum()
             index = [el for el, exclude in zip(index, records_to_filter) if not exclude]
             logger.info(
-                f"Filtered {_total} ({_total / initial_size:.1%}) records  from dataset"
+                f"Filtered {_total} ({_total / initial_size:.1%}) records from dataset"  # noqa: E231
             )
 
         return index
@@ -203,21 +218,26 @@ class BaseDataset(Dataset):
                 such as label and object path.
         """
         for entry in index:
-            for part in ['s1', 's2', 'mix']:
-                assert f"{part}_path" in entry, (
-                    f"Each dataset item should include field '{part}_path' - path to {part} audio file."
-                )
-                
-            assert f"len" in entry, (
-                f"Each dataset item should include field 'len'"
-                f" - length of the all audios."
+            for part in ["s1", "s2", "mix"]:
+                assert (
+                    f"{part}_path" in entry
+                ), "Each dataset item should include field '{part}_path' - path to {part} audio file."
+
+            assert "len" in entry, (
+                "Each dataset item should include field 'len'"
+                " - length of the all audios."
             )
-            
+
             if self.use_video_data:
                 for part in ["s1", "s2"]:
-                    assert f"{part}_mouth_path" in entry, (
-                        f"When use video each dataset item should include field"
-                        f"'{part}_mouth_path' - path to {part} mouth file."
+                    print(entry)
+                    assert (
+                        f"{part}_mouth_path" in entry
+                        or f"{part}_video_emb_path" in entry
+                    ), (
+                        f"When use video each dataset item should include one of fields: "
+                        f"'{part}_mouth_path' - path to {part} mouth file or "
+                        f"'{part}_video_emb_path' - path to {part} video embedding file"
                     )
 
     @staticmethod

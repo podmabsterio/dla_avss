@@ -8,6 +8,7 @@ from omegaconf import OmegaConf
 from src.datasets.data_utils import get_dataloaders
 from src.trainer import Trainer
 from src.utils.init_utils import set_random_seed, setup_saving_and_logging
+from src.video_preparation import create_video_embeddings_if_needed
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -32,6 +33,8 @@ def main(config):
         device = "cuda" if torch.cuda.is_available() else "cpu"
     else:
         device = config.trainer.device
+
+    create_video_embeddings_if_needed(device, config)
 
     # setup data_loader instances
     # batch_transforms should be put on device
