@@ -2,9 +2,8 @@ import math
 
 import torch
 import torch.nn.functional as FF
+from timm.layers import DropPath
 from torch import nn
-
-from timm.models.layers import DropPath
 
 
 def _conv_chain_out_size(dim_size, q):
@@ -39,7 +38,6 @@ class SinusoidalPositionalEncoding(nn.Module):
         return x + pos.unsqueeze(0)
 
 
-
 class GlobalAttention(nn.Module):
     def __init__(
         self,
@@ -55,14 +53,16 @@ class GlobalAttention(nn.Module):
 
         self.ln1 = nn.LayerNorm(in_channels)
         self.pos_enc = SinusoidalPositionalEncoding(in_channels)
-        self.attention = nn.MultiheadAttention(in_channels, num_head, dropout, batch_first=True)
+        self.attention = nn.MultiheadAttention(
+            in_channels, num_head, dropout, batch_first=True
+        )
         self.dropout = nn.Dropout(dropout)
         self.ln2 = nn.LayerNorm(in_channels)
         self.droppath = DropPath(dropout)
         self.ffn = nn.Sequential(
             nn.Conv1d(in_channels, hidden_channels, 1),
             nn.GroupNorm(num_channels=hidden_channels, num_groups=1),
-            nn.Conv1d(hidden_channels, hidden_channels, kernel_size, padding='same'),
+            nn.Conv1d(hidden_channels, hidden_channels, kernel_size, padding="same"),
             nn.ReLU(),
             DropPath(dropout),
             nn.Conv1d(hidden_channels, in_channels, 1),
@@ -83,7 +83,7 @@ class GlobalAttention(nn.Module):
         x = self.droppath(x) + res
         ffn_res = x
         x = self.ffn(x) + ffn_res
-        
+
         return x
 
 
@@ -224,7 +224,7 @@ class VPBlock(nn.Module):
             num_head=num_heads,
             dropout=0.1,
         )
-        
+
         self.upsampling = ReconstructionModule1D(hidden_channels, q)
         self.upsampling_conv = nn.Conv1d(hidden_channels, in_channels, 1)
 

@@ -1,5 +1,5 @@
 defaults:
-  - model: convtasnet
+  - model: rtfsnet
   - writer: cometml
   - metrics: training
   - datasets: train
@@ -20,7 +20,7 @@ loss_function:
   _target_: src.loss.PITSISNRLoss
 video_encoder:
   prepare_embeddings: True
-  weights_dir: "data/video_encoders"
+  weights_dir: "weights"
   model_name: "lrw_resnet18_dctcn_video_boundary"
   dataloader:
     _target_: torch.utils.data.DataLoader
@@ -33,7 +33,7 @@ trainer:
   log_step: 50
   n_epochs: 15
   epoch_len: 3000
-  device_tensors: ["target", "mix"] # which tensors should be on device (ex. GPU)
+  device_tensors: ["target", "mix", "s1_video_emb", "s2_video_emb"] # which tensors should be on device (ex. GPU)
   resume_from: null # null or path to the checkpoint dir with *.pth and config.yaml
   device: cuda # device name or "auto"
   override: True # if True, will override the previous run with the same name

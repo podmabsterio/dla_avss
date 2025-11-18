@@ -1,6 +1,8 @@
+from typing import Optional
+
 import torch
 from torch import nn
-from typing import Optional
+
 
 class ResnetBlock(nn.Module):
     expansion = 1
@@ -10,7 +12,7 @@ class ResnetBlock(nn.Module):
         inplanes: int,
         planes: int,
         stride: int = 1,
-        downsample: Optional[nn.Module] = None
+        downsample: Optional[nn.Module] = None,
     ):
         super().__init__()
         self.conv1 = nn.Conv2d(inplanes, planes, 3, stride, 1, bias=False)
@@ -37,7 +39,7 @@ class ResNet(nn.Module):
         self,
         layers: list[int],
         gamma_zero: bool = False,
-        avg_pool_downsample: bool = False
+        avg_pool_downsample: bool = False,
     ):
         super().__init__()
         self.inplanes = 64
@@ -58,13 +60,13 @@ class ResNet(nn.Module):
                         kernel_size=stride,
                         stride=stride,
                         ceil_mode=True,
-                        count_include_pad=False
+                        count_include_pad=False,
                     ),
                     nn.Conv2d(
                         in_channels=self.inplanes,
                         out_channels=planes * ResnetBlock.expansion,
                         kernel_size=1,
-                        bias=False
+                        bias=False,
                     ),
                     nn.BatchNorm2d(planes * ResnetBlock.expansion),
                 )
@@ -75,7 +77,7 @@ class ResNet(nn.Module):
                         out_channels=planes * ResnetBlock.expansion,
                         kernel_size=1,
                         stride=stride,
-                        bias=False
+                        bias=False,
                     ),
                     nn.BatchNorm2d(planes * ResnetBlock.expansion),
                 )

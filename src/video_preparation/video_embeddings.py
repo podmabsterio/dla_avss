@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 from src.datasets.video_collate import video_collate_fn
 from src.datasets.video_dataset import VideoDataset
-from src.model.RTFSNet.encoders import VideoEncoder
+from src.model.RTFSNet_modules.encoders import VideoEncoder
 
 
 def _create_emb_dir(path: Path):
