@@ -8,7 +8,7 @@ class VideoNormalization(nn.Module):
         self.eps = eps
 
     def forward(self, item):
-        for key in ("s1_video", "s2_video"):
+        for key in ("video", "s1_video", "s2_video"):
             if key not in item:
                 continue
 

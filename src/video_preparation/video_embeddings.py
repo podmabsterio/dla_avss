@@ -39,7 +39,7 @@ def _generate_and_save_video_embeddings(
         if not is_dir_created:
             is_dir_created = True
             _create_emb_dir(save_dir)
-        _save_embs(embs, batch["video_names"])
+        _save_embs(embs, save_dir=save_dir, names=batch["video_names"])
 
 
 def create_video_embeddings_if_needed(device, config):
