@@ -1,0 +1,46 @@
+defaults:
+  - model: convtasnet
+  - writer: cometml
+  - metrics: training
+  - datasets: train
+  - dataloader: default
+  - transforms: only_peak_normalization
+  - _self_
+optimizer:
+  _target_: torch.optim.AdamW
+  lr: 5e-5
+lr_scheduler:
+  _target_: torch.optim.lr_scheduler.OneCycleLR
+  max_lr: 1e-3
+  pct_start: 0.1
+  steps_per_epoch: ${trainer.epoch_len}
+  epochs: ${trainer.n_epochs}
+  anneal_strategy: cos
+loss_function:
+  _target_: src.loss.PITSISNRLoss
+video_encoder:
+  prepare_embeddings: True
+  weights_dir: "data/video_encoders"
+  model_name: "lrw_resnet18_dctcn_video_boundary"
+  dataloader:
+    _target_: torch.utils.data.DataLoader
+    batch_size: 32
+    num_workers: 8
+    pin_memory: True
+  dataset_path: "data/avss_dataset"
+
+trainer:
+  log_step: 50
+  n_epochs: 15
+  epoch_len: 3000
+  device_tensors: ["target", "mix"] # which tensors should be on device (ex. GPU)
+  resume_from: null # null or path to the checkpoint dir with *.pth and config.yaml
+  device: cuda # device name or "auto"
+  override: True # if True, will override the previous run with the same name
+  monitor: "max val_si_snri" # "off" or "max/min metric_name", i.e. our goal is to maximize/minimize metric
+  save_period: 1 # checkpoint each save_period epochs in addition to the best epoch
+  early_stop: ${trainer.n_epochs} # epochs for early stopping
+  save_dir: "saved"
+  max_grad_norm: 5.0
+  examples_to_log_on_val: 5
+  seed: 1

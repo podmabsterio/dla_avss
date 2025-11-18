@@ -1,11 +1,11 @@
-import torch
-from torch import nn
+from pathlib import Path
+from typing import Optional
 
 import torch
 import torch.nn as nn
-from typing import Optional
-from pathlib import Path
+
 from src.model.RTFSNet.resnet import ResNet
+
 
 def _3D_to_2D_tensor(x: torch.Tensor) -> torch.Tensor:
     b, c, t, h, w = x.shape
@@ -27,15 +27,11 @@ class Lipreading(nn.Module):
                 kernel_size=(5, 7, 7),
                 stride=(1, 2, 2),
                 padding=(2, 3, 3),
-                bias=False
+                bias=False,
             ),
             nn.BatchNorm3d(self.frontend_nout),
             nn.SiLU(inplace=True),
-            nn.MaxPool3d(
-                kernel_size=(1, 3, 3),
-                stride=(1, 2, 2),
-                padding=(0, 1, 1)
-            )
+            nn.MaxPool3d(kernel_size=(1, 3, 3), stride=(1, 2, 2), padding=(0, 1, 1)),
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -49,28 +45,30 @@ class Lipreading(nn.Module):
         x = self.trunk(x)
         return x.view(b, t_new, x.size(1))
 
+
 class VideoEncoder(nn.Module):
     def __init__(
         self,
+        weights_folder,
         video_encoder_model_name: str = "lrw_resnet18_dctcn_video_boundary",
-        weights_folder: str = None,
-        device: str = 'cpu'
+        device: str = "cpu",
     ):
         super().__init__()
         if video_encoder_model_name.lower() != "lrw_resnet18_dctcn_video_boundary":
             raise ValueError(f"Unknown model: {video_encoder_model_name}")
         self.encoder = Lipreading()
 
-        if weights_folder is not None:
-            weights_path = Path(weights_folder) / f"{video_encoder_model_name}.pth"
-            if not weights_path.exists():
-                raise FileNotFoundError(f"Cannot find weights file: {weights_path.resolve()}")
+        weights_path = Path(weights_folder) / f"{video_encoder_model_name}.pth"
+        if not weights_path.exists():
+            raise FileNotFoundError(
+                f"Cannot find weights file: {weights_path.resolve()}"
+            )
 
-            state = torch.load(weights_path, map_location=device)
+        state = torch.load(weights_path, map_location=device)
 
-            if "model_state_dict" in state:
-                state = state["model_state_dict"]
-            self.encoder.load_state_dict(state, strict=False)
+        if "model_state_dict" in state:
+            state = state["model_state_dict"]
+        self.encoder.load_state_dict(state, strict=False)
 
         self.to(device)
 
@@ -84,6 +82,7 @@ class VideoEncoder(nn.Module):
         v = self.encoder(y)
         return v.permute(0, 2, 1).contiguous()
 
+
 class AudioEncoder(nn.Module):
     def __init__(
         self,
@@ -91,7 +90,7 @@ class AudioEncoder(nn.Module):
         hop_length: int,
         out_chan: int = 2,
         kernel_size: int = 3,
-        stride: int = 1
+        stride: int = 1,
     ):
         super().__init__()
 
@@ -108,13 +107,13 @@ class AudioEncoder(nn.Module):
                 kernel_size=self.kernel_size,
                 stride=self.stride,
                 padding=1,
-                bias=False
+                bias=False,
             ),
             nn.ReLU(),
             nn.GroupNorm(
                 num_groups=1,
                 num_channels=self.out_chan,
-            )
+            ),
         )
         nn.init.xavier_uniform_(self.conv[0].weight)
 

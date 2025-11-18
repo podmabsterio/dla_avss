@@ -1,0 +1,1 @@
+from src.video_preparation.video_embeddings import create_video_embeddings_if_needed
