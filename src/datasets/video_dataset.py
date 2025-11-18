@@ -2,11 +2,8 @@ from pathlib import Path
 
 import numpy as np
 import torch
-import torchaudio
 from torch.utils.data import Dataset
-from tqdm.auto import tqdm
-
-from src.utils.io_utils import ROOT_PATH, read_json, write_json
+from src.transforms.video import VideoNormalization
 
 
 class VideoDataset(Dataset):
@@ -26,6 +23,7 @@ class VideoDataset(Dataset):
             )
 
         self.video_files = self._find_files(dataset_path)
+        self.normalize = VideoNormalization()
 
     def _find_files(self, dataset_path: Path):
         return [
@@ -42,8 +40,8 @@ class VideoDataset(Dataset):
         npz = np.load(mouth_path)
         frames = npz["data"]
 
-        video = torch.from_numpy(frames).unsqueeze(1)
+        video = torch.from_numpy(frames).unsqueeze(0)
 
         item_dict = {"video": video, "video_name": mouth_path.stem}
 
-        return item_dict
+        return self.normalize(item_dict)
