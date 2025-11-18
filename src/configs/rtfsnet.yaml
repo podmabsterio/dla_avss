@@ -2,7 +2,7 @@ defaults:
   - model: rtfsnet
   - writer: cometml
   - metrics: training
-  - datasets: train
+  - datasets: train_av
   - dataloader: default
   - transforms: only_peak_normalization
   - _self_
@@ -24,7 +24,7 @@ video_encoder:
   model_name: "lrw_resnet18_dctcn_video_boundary"
   dataloader:
     _target_: torch.utils.data.DataLoader
-    batch_size: 32
+    batch_size: 16
     num_workers: 8
     pin_memory: True
   dataset_path: "data/avss_dataset"

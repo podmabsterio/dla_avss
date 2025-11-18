@@ -75,7 +75,6 @@ class Trainer(BaseTrainer):
             self.log_only_mix(**batch)
         else:
             # Log Stuff
-            print("examples_to_log_on_val:", self.examples_to_log_on_val)
             self.log_all_audios(examples_to_log=self.examples_to_log_on_val, **batch)
 
     def log_only_mix(self, mix, **batch):

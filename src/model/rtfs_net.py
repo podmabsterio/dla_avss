@@ -122,7 +122,11 @@ class RTFSNet2SpeakersSeparation(BaseModel):
         self.rtfs_net = RTFSNet(*args, **kwargs)
 
     def forward(
-        self, mix: torch.Tensor, s1_video_emb: torch.Tensor, s2_video_emb: torch.Tensor
+        self,
+        mix: torch.Tensor,
+        s1_video_emb: torch.Tensor,
+        s2_video_emb: torch.Tensor,
+        **kwargs
     ):
         """
         Args:
@@ -145,7 +149,11 @@ class RTFSNetVideoEncoding2SpeakersSeparation(
         self.rtfs_net = RTFSNet2SpeakersSeparation(*args, **kwargs)
 
     def forward(
-        self, mix: torch.Tensor, s1_mouth: torch.Tensor, s2_mouth: torch.Tensor
+        self,
+        mix: torch.Tensor,
+        s1_mouth: torch.Tensor,
+        s2_mouth: torch.Tensor,
+        **kwargs
     ):
         """
         Args:
