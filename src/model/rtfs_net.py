@@ -34,32 +34,6 @@ class RTFSNet(nn.Module):
             nn.Conv2d(in_channels=self.c_a, out_channels=self.c_a, kernel_size=1),
         )
 
-        self.ap = RTFSBlock(
-            in_channels=self.c_a,
-            hidden_channels=64,
-            rnn_hidden_channels=32,
-            q=2,
-            num_rnn_layers=num_rnn_layers,
-            rnn_kernel_size=8,
-            num_feats=win // 2,
-            num_heads=num_heads_ap,
-            attn_hidden_channels=4,
-            use_sru=use_sru,
-        )
-
-        self.vp_in_chan = 512
-        self.vp = VPBlock(
-            in_channels=self.vp_in_chan,
-            hidden_channels=64,
-            q=4,
-            num_heads=num_heads_vp,
-        )
-
-        self.caf = CAFBlock(chan_audio=self.c_a, chan_video=self.vp_in_chan)
-
-        self.rtfs_block = None
-        self.rtfs_block_list = None
-
         rtfsblock_params = dict(
             in_channels=self.c_a,
             hidden_channels=64,
@@ -72,6 +46,21 @@ class RTFSNet(nn.Module):
             attn_hidden_channels=4,
             use_sru=use_sru,
         )
+
+        self.rtfs_block = RTFSBlock(**rtfsblock_params)
+
+        self.vp_in_chan = 512
+        self.vp = VPBlock(
+            in_channels=self.vp_in_chan,
+            hidden_channels=64,
+            q=4,
+            num_heads=num_heads_vp,
+        )
+
+        self.caf = CAFBlock(chan_audio=self.c_a, chan_video=self.vp_in_chan)
+
+        self.rtfs_block_list = None
+
         if self.share_rtfs_block_weights:
             self.rtfs_block = RTFSBlock(**rtfsblock_params)
         else:
@@ -105,7 +94,7 @@ class RTFSNet(nn.Module):
 
         x_res = x
 
-        x = self.ap(x)
+        x = self.rtfs_block(x)
         y = self.vp(video_emb)
 
         x = self.caf(x, y)
