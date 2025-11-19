@@ -15,7 +15,7 @@ class PeakNormalization(nn.Module):
         peak = x.abs().amax().clamp_min(self.eps)
         gain = self.peak_target / peak
 
-        for key in ("mix", "s1", "s2"):
+        for key in ("mix", "s1", "s2", "target"):
             if key in item and item[key] is not None:
                 item[key] = item[key] * gain
 

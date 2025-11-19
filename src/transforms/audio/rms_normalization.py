@@ -1,7 +1,8 @@
 import torch
 from torch import nn
 
-class RMSNormalization(nn.Module):
+
+class RMSNormalization(nn.Module):  # TODO not used
     def __init__(self, eps=1e-8):
         super.__init__()
         self.eps = eps
@@ -13,7 +14,7 @@ class RMSNormalization(nn.Module):
         energy = (mix**2).mean()
         scale = torch.sqrt(torch.clamp(energy, min=self.eps))
         gain = 1.0 / scale
-        for key in ("s1", "s2", "mix"):
+        for key in ("s1", "s2", "mix", "target"):
             if key in item:
                 item[key] = item[key] * gain
 

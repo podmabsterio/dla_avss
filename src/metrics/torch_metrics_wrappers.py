@@ -1,4 +1,5 @@
 import torch
+from torch import nn
 from torchmetrics.audio import PermutationInvariantTraining as PIT
 from torchmetrics.functional.audio import (
     scale_invariant_signal_distortion_ratio as si_sdr,
@@ -82,3 +83,27 @@ class PIT_SISDRi(BaseMetric):  # TODO fix copy paste
         return (
             self.pit_sisdr(preds, target) - si_sdr(mix.expand(-1, 2, -1), target).mean()
         )
+
+
+class AudioMetricWrapper(nn.Module):
+    def __init__(self, metric, device="auto"):
+        super().__init__()
+        if device == "auto":
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.metric = metric.to(device)
+
+    def __call__(self, preds: torch.Tensor, target: torch.Tensor, **batch):
+        return self.metric(preds, target)
+
+
+class SIAudioMetricWrapper(nn.Module):
+    def __init__(self, metric, device="auto"):
+        super().__init__()
+        if device == "auto":
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.metric = metric.to(device)
+
+    def __call__(
+        self, mix: torch.Tensor, preds: torch.Tensor, target: torch.Tensor, **batch
+    ):
+        return self.metric(preds, target) - self.metric(mix, target)
