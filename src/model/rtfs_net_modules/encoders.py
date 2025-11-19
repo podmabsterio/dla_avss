@@ -4,7 +4,7 @@ from typing import Optional
 import torch
 import torch.nn as nn
 
-from src.model.RTFSNet.resnet import ResNet
+from src.model.rtfs_net_modules.resnet import ResNet
 
 
 def _3D_to_2D_tensor(x: torch.Tensor) -> torch.Tensor:
@@ -135,7 +135,6 @@ class AudioEncoder(nn.Module):
             window=self.window.to(x.device),
             return_complex=True,
         )
-
         spec = torch.stack([spec.real, spec.imag], 1).transpose(2, 3).contiguous()
         spec_feature_map = self.conv(spec)
 

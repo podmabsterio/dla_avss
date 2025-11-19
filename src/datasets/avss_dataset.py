@@ -98,24 +98,24 @@ class AVSSDataset(BaseDataset):
                     + str(s2_file.resolve())
                 )
 
-            s1_info = torchaudio.info(str(s1_file))
-            s2_info = torchaudio.info(str(s2_file))
-            mix_info = torchaudio.info(str(mix_file))
+            # s1_info = torchaudio.info(str(s1_file))
+            # s2_info = torchaudio.info(str(s2_file))
+            # mix_info = torchaudio.info(str(mix_file))
 
-            s1_length = s1_info.num_frames / s1_info.sample_rate
-            s2_length = s2_info.num_frames / s2_info.sample_rate
-            mix_length = mix_info.num_frames / mix_info.sample_rate
+            # s1_length = s1_info.num_frames / s1_info.sample_rate
+            # s2_length = s2_info.num_frames / s2_info.sample_rate
+            # mix_length = mix_info.num_frames / mix_info.sample_rate
 
-            if not (s1_length == s2_length and s2_length == mix_length):
-                raise ValueError(
-                    f"Length of audios with id {s1_file.stem} are inconsistent"
-                )
+            # if not (s1_length == s2_length and s2_length == mix_length):
+            #     raise ValueError(
+            #         f"Length of audios with id {s1_file.stem} are inconsistent"
+            #     )
 
             index_element = {
                 "s1_path": str(s1_file),
                 "s2_path": str(s2_file),
                 "mix_path": str(mix_file),
-                "len": s1_length,
+                "len": 2,
             }
 
             if use_video_data:

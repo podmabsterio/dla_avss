@@ -1,6 +1,5 @@
 import torch
 import torch.nn.functional as FF
-from sru import SRU
 from torch import nn
 
 
@@ -136,6 +135,8 @@ class DualPathBlock(nn.Module):
 
         self.ln = nn.LayerNorm(in_channels)
         if use_sru:
+            from sru import SRU
+
             self.rnn = SRU(
                 in_channels * kernel_size,
                 hidden_dim,

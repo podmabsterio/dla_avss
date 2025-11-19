@@ -22,7 +22,7 @@ class S3Block(nn.Module):
                 kernel_size=1,
                 bias=True,
             ),
-            nn.ReLU()
+            nn.ReLU(),
         )
 
     def forward(self, a_0: Tensor, a_r: Tensor) -> Tensor:

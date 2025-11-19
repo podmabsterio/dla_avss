@@ -97,7 +97,7 @@ class BaseDataset(Dataset):
 
                 if emb_key in data_dict:
                     emb_path = data_dict[emb_key]
-                    emb = torch.load(emb_path)
+                    emb = torch.load(emb_path, map_location="cpu")
 
                     instance_data.update(
                         {
@@ -230,7 +230,6 @@ class BaseDataset(Dataset):
 
             if self.use_video_data:
                 for part in ["s1", "s2"]:
-                    print(entry)
                     assert (
                         f"{part}_mouth_path" in entry
                         or f"{part}_video_emb_path" in entry
