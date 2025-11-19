@@ -53,7 +53,6 @@ class RTFSNet(nn.Module):
             hidden_channels=64,
             q=4,
             num_heads=num_heads_vp,
-            attn_hidden_channels=2 * self.vp_in_chan,
         )
 
         self.caf = CAFBlock(chan_audio=self.c_a, chan_video=self.vp_in_chan)

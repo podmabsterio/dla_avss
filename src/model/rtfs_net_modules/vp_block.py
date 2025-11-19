@@ -42,15 +42,15 @@ class GlobalAttention(nn.Module):
     def __init__(
         self,
         in_channels,
-        hidden_channels,
         kernel_size,
         num_head,
         dropout,
     ):
-        super(GlobalAttention, self).__init__()
+        super().__init__()
 
         assert in_channels % num_head == 0
 
+        hidden_channels = 2 * in_channels
         self.ln1 = nn.LayerNorm(in_channels)
         self.pos_enc = SinusoidalPositionalEncoding(in_channels)
         self.attention = nn.MultiheadAttention(
@@ -205,7 +205,6 @@ class VPBlock(nn.Module):
         hidden_channels,
         q,
         num_heads,
-        attn_hidden_channels,
     ):
         super().__init__()
         self.scaling_conv = nn.Conv1d(
@@ -219,7 +218,6 @@ class VPBlock(nn.Module):
 
         self.attn = GlobalAttention(
             in_channels=hidden_channels,
-            hidden_channels=attn_hidden_channels,
             kernel_size=3,
             num_head=num_heads,
             dropout=0.1,

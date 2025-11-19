@@ -24,7 +24,7 @@ video_encoder:
   model_name: "lrw_resnet18_dctcn_video_boundary"
   dataloader:
     _target_: torch.utils.data.DataLoader
-    batch_size: 16
+    batch_size: 32
     num_workers: 8
     pin_memory: True
   dataset_path: "data/avss_dataset"
