@@ -85,9 +85,9 @@ class PIT_SISDRi(BaseMetric):  # TODO fix copy paste
         )
 
 
-class AudioMetricWrapper(nn.Module):
-    def __init__(self, metric, device="auto"):
-        super().__init__()
+class AudioMetricWrapper(BaseMetric):
+    def __init__(self, metric, name, device="auto"):
+        super().__init__(name)
         if device == "auto":
             device = "cuda" if torch.cuda.is_available() else "cpu"
         self.metric = metric.to(device)
@@ -96,9 +96,9 @@ class AudioMetricWrapper(nn.Module):
         return self.metric(preds, target)
 
 
-class SIAudioMetricWrapper(nn.Module):
-    def __init__(self, metric, device="auto"):
-        super().__init__()
+class SIAudioMetricWrapper(BaseMetric):
+    def __init__(self, metric, name, device="auto"):
+        super().__init__(name)
         if device == "auto":
             device = "cuda" if torch.cuda.is_available() else "cpu"
         self.metric = metric.to(device)

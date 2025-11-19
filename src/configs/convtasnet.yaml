@@ -1,9 +1,9 @@
 defaults:
   - model: convtasnet
   - writer: cometml
-  - metrics: training
+  - metrics: pit
   - datasets: train
-  - dataloader: default
+  - dataloader: bs32
   - transforms: only_peak_normalization
   - _self_
 optimizer:
