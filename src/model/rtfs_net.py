@@ -10,7 +10,7 @@ from src.model.rtfs_net_modules.s3_block import S3Block
 from src.model.rtfs_net_modules.vp_block import VPBlock
 
 
-class RTFSNet(nn.Module):
+class RTFSNet(BaseModel):
     def __init__(
         self,
         win=256,
@@ -81,13 +81,13 @@ class RTFSNet(nn.Module):
                 x = self.rtfs_block_list[i](x + res)
         return x
 
-    def forward(self, x: torch.Tensor, video_emb: torch.Tensor):
+    def forward(self, mix: torch.Tensor, video_emb: torch.Tensor, **batch):
         """
         Args:
             x (torch.Tensor): audio batch
             video_emb (torch.Tensor): video embeddings batch
         """
-        x = self.encoder(x)
+        x = self.encoder(mix)
         x_mix_emb = x
 
         x = self.audio_bottleneck(x)
@@ -101,7 +101,9 @@ class RTFSNet(nn.Module):
         x = self._apply_rtfs_blocks(x, x_res)
         x = self.s3(x_mix_emb, x)
 
-        return self.decoder(x)
+        audio, spec = self.decoder(x)
+
+        return {"preds": audio, "pred_specs": spec}
 
 
 class RTFSNet2SpeakersSeparation(BaseModel):
@@ -109,36 +111,21 @@ class RTFSNet2SpeakersSeparation(BaseModel):
         super().__init__()
         self.rtfs_net = RTFSNet(*args, **kwargs)
 
-    def forward(self, mix: torch.Tensor, video_emb: torch.Tensor, **kwargs):
+    def forward(
+        self,
+        mix: torch.Tensor,
+        s1_video_emb: torch.Tensor,
+        s2_video_emb: torch.Tensor,
+        **kwargs
+    ):
         """
         Args:
-            mix (torch.Tensor): audio batch
-            video_emb (torch.Tensor): video embeddings batch
+            x (torch.Tensor): audio batch
+            s1_video_emb (torch.Tensor): first speaker video embeddings batch
+            s2_video_emb (torch.Tensor): second speaker video embeddings batch
         """
-        preds = self.rtfs_net(mix, video_emb)
+        s1 = self.rtfs_net(mix, s1_video_emb)
+        s2 = self.rtfs_net(mix, s2_video_emb)
 
+        preds = torch.cat([s1["preds"], s2["preds"]], dim=1)
         return {"preds": preds}
-
-
-class RTFSNetVideoEncoding2SpeakersSeparation(
-    BaseModel
-):  # this version of the model applies video encoder
-    def __init__(self, *args, **kwargs):
-        super().__init__()
-        self.rtfs_net = RTFSNet2SpeakersSeparation(*args, **kwargs)
-
-    def forward(self, mix: torch.Tensor, video_emb: torch.Tensor, **kwargs):
-        """
-        Args:
-            mix (torch.Tensor): audio batch
-            video_emb (torch.Tensor): video embeddings batch
-        """
-        # s1_video_emb = video_enc(s1_mouth)
-        # s2_video_emb = video_enc(s2_mouth)
-        # s1 = self.rtfs_net(mix, s1_video_emb)
-        # s2 = self.rtfs_net(mix, s2_video_emb)
-
-        # preds = torch.cat([s1, s2], dim=1)
-        # return {'preds': preds} TODO
-
-        raise NotImplementedError()
