@@ -39,4 +39,4 @@ class Decoder(nn.Module):
             window=self.window.to(z.device),
         )
 
-        return audio.view(batch_size, 1, -1)
+        return audio.view(batch_size, 1, -1), spec
