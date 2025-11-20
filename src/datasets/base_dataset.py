@@ -175,11 +175,12 @@ class BaseDataset(Dataset):
             instance_data (dict): dict, containing instance
                 (a single dataset element).
         """
-        data_dict = self._index[ind // 2]
 
         if self.dataset_type == "tss":
+            data_dict = self._index[ind // 2]
             instance_data = self._tss_getitem(data_dict, "s1" if ind % 2 == 0 else "s2")
         elif self.dataset_type == "bss":
+            data_dict = self._index[ind]
             instance_data = self._bss_getitem(data_dict)
         else:
             raise ValueError("dataset_type can be one of ('tss', 'bss')")
