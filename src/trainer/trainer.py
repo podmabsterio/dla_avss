@@ -82,11 +82,16 @@ class Trainer(BaseTrainer):
 
     def log_all_audios(self, mix, preds, target, examples_to_log=5, **batch):
         for i in range(examples_to_log):
-            self.log_audio(mix[i], f"mix_{i + 1}")
-            self.log_audio(preds[i, 0, :].unsqueeze(0), f"pred1_{i + 1}")
-            self.log_audio(preds[i, 1, :].unsqueeze(0), f"pred2_{i + 1}")
-            self.log_audio(target[i, 0, :].unsqueeze(0), f"target1_{i + 1}")
-            self.log_audio(target[i, 1, :].unsqueeze(0), f"target2_{i + 1}")
+            if preds.shape[1] > 1:
+                self.log_audio(mix[i], f"mix_{i + 1}")
+                self.log_audio(preds[i, 0, :].unsqueeze(0), f"pred1_{i + 1}")
+                self.log_audio(preds[i, 1, :].unsqueeze(0), f"pred2_{i + 1}")
+                self.log_audio(target[i, 0, :].unsqueeze(0), f"target1_{i + 1}")
+                self.log_audio(target[i, 1, :].unsqueeze(0), f"target2_{i + 1}")
+            else:
+                self.log_audio(mix[i], f"mix_{i + 1}")
+                self.log_audio(preds[i], f"pred_{i + 1}")
+                self.log_audio(target[i], f"target_{i + 1}")
 
     def log_audio(self, audio, audio_name):
         audio_for_writer = audio.detach().cpu()

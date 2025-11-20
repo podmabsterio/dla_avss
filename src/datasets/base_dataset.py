@@ -22,6 +22,7 @@ class BaseDataset(Dataset):
         self,
         index,
         use_video_data=False,
+        dataset_type="bss",
         target_sr=16000,
         limit=None,
         max_audio_length=None,
@@ -46,6 +47,7 @@ class BaseDataset(Dataset):
                 tensor name.
         """
         self.use_video_data = use_video_data
+        self.dataset_type = dataset_type
 
         self._assert_index_is_valid(index)
 
@@ -59,23 +61,7 @@ class BaseDataset(Dataset):
         self.target_sr = target_sr
         self.instance_transforms = instance_transforms
 
-    def __getitem__(self, ind):
-        """
-        Get element from the index, preprocess it, and combine it
-        into a dict.
-
-        Notice that the choice of key names is defined by the template user.
-        However, they should be consistent across dataset getitem, collate_fn,
-        loss_function forward method, and model forward method.
-
-        Args:
-            ind (int): index in the self.index list.
-        Returns:
-            instance_data (dict): dict, containing instance
-                (a single dataset element).
-        """
-        data_dict = self._index[ind]
-
+    def _bss_getitem(self, data_dict):
         instance_data = {"len": data_dict["len"]}
 
         for part in ["s1", "s2", "mix"]:
@@ -120,8 +106,84 @@ class BaseDataset(Dataset):
                     )
                 else:
                     raise KeyError(
-                        f"Missing both '{mouth_key}' and '{emb_key}' in index for item #{ind}"
+                        f"Missing both '{mouth_key}' and '{emb_key}' in index"
                     )
+        return instance_data
+
+    def _tss_getitem(self, data_dict, target_spk):
+        instance_data = {"len": data_dict["len"]}
+
+        mix_path = data_dict["mix_path"]
+        target_path = data_dict[f"{target_spk}_path"]
+
+        mix = self.load_audio(mix_path)
+        target = self.load_audio(target_path)
+
+        instance_data.update(
+            {
+                "mix": mix,
+                "target": target,
+                "mix_path": mix_path,
+                "target_path": target_path,
+            }
+        )
+
+        if self.use_video_data:
+            mouth_key = f"{target_spk}_mouth_path"
+            emb_key = f"{target_spk}_video_emb_path"
+
+            if emb_key in data_dict:
+                emb_path = data_dict[emb_key]
+                emb = torch.load(emb_path, map_location="cpu")
+
+                instance_data.update(
+                    {
+                        "video_emb": emb,
+                        "video_emb_path": emb_path,
+                    }
+                )
+            elif mouth_key in data_dict:
+                mouth_path = data_dict[mouth_key]
+                npz = np.load(mouth_path)
+                frames = npz["data"]
+
+                video = torch.from_numpy(frames).unsqueeze(1)
+
+                instance_data.update(
+                    {
+                        "video": video,
+                        "mouth_path": mouth_path,
+                    }
+                )
+            else:
+                raise KeyError(f"Missing both '{mouth_key}' and '{emb_key}' in index")
+
+        return instance_data
+
+    def __getitem__(self, ind):
+        """
+        Get element from the index, preprocess it, and combine it
+        into a dict.
+
+        Notice that the choice of key names is defined by the template user.
+        However, they should be consistent across dataset getitem, collate_fn,
+        loss_function forward method, and model forward method.
+
+        Args:
+            ind (int): index in the self.index list.
+        Returns:
+            instance_data (dict): dict, containing instance
+                (a single dataset element).
+        """
+
+        if self.dataset_type == "tss":
+            data_dict = self._index[ind // 2]
+            instance_data = self._tss_getitem(data_dict, "s1" if ind % 2 == 0 else "s2")
+        elif self.dataset_type == "bss":
+            data_dict = self._index[ind]
+            instance_data = self._bss_getitem(data_dict)
+        else:
+            raise ValueError("dataset_type can be one of ('tss', 'bss')")
 
         instance_data = self.preprocess_data(instance_data)
 
@@ -131,7 +193,12 @@ class BaseDataset(Dataset):
         """
         Get length of the dataset (length of the index).
         """
-        return len(self._index)
+        if self.dataset_type == "bss":
+            return len(self._index)
+        elif self.dataset_type == "tss":
+            return 2 * len(self._index)
+        else:
+            raise ValueError("dataset_type can be one of ('tss', 'bss')")
 
     def load_audio(self, path):
         audio_tensor, sr = torchaudio.load(path)

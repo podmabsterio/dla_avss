@@ -1,0 +1,37 @@
+device: "auto"
+train:
+  - _target_: src.metrics.SIAudioMetricWrapper
+    metric:
+      _target_: torchmetrics.audio.ScaleInvariantSignalNoiseRatio
+    device: ${metrics.device}
+    name: "si_snri"
+inference:
+  - _target_: src.metrics.SIAudioMetricWrapper
+    metric:
+      _target_: torchmetrics.audio.ScaleInvariantSignalNoiseRatio
+    device: ${metrics.device}
+    name: "si_snri"
+  - _target_: src.metrics.SIAudioMetricWrapper
+    metric:
+      _target_: torchmetrics.audio.ScaleInvariantSignalDistortionRatio
+    device: ${metrics.device}
+    name: "si_sdri"
+  - _target_: src.metrics.AudioMetricWrapper
+    metric:
+      _target_: torchmetrics.audio.ScaleInvariantSignalNoiseRatio
+    device: ${metrics.device}
+    name: "si_snr"
+  - _target_: src.metrics.AudioMetricWrapper
+    metric:
+      _target_: torchmetrics.audio.PerceptualEvaluationSpeechQuality
+      fs: 16000
+      mode: 'wb' # WildBerries (TODO remove this joke)
+      n_processes: 1
+    device: ${metrics.device}
+    name: "pesq"
+  - _target_: src.metrics.AudioMetricWrapper
+    metric:
+      _target_: torchmetrics.audio.ShortTimeObjectiveIntelligibility
+      fs: 16000
+    device: ${metrics.device}
+    name: "stoi"

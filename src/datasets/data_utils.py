@@ -2,7 +2,7 @@ from itertools import repeat
 
 from hydra.utils import instantiate
 
-from src.datasets.collate import collate_fn
+from src.datasets.collate import bss_collate_fn
 from src.utils.init_utils import set_worker_seed
 
 
@@ -74,6 +74,8 @@ def get_dataloaders(config, device):
             f"The batch size ({config.dataloader.batch_size}) cannot "
             f"be larger than the dataset length ({len(dataset)})"
         )
+
+        collate_fn = bss_collate_fn if dataset.dataset_type == "bss" else None
 
         partition_dataloader = instantiate(
             config.dataloader,

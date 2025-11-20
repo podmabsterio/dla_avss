@@ -1,7 +1,7 @@
 import torch
 
 
-def collate_fn(dataset_items: list[dict]):
+def bss_collate_fn(dataset_items: list[dict]):
     """
     Collate and pad fields in the dataset items.
     Converts individual items into a batch.
@@ -85,3 +85,6 @@ def collate_fn(dataset_items: list[dict]):
             result_batch[f"{part}_video_emb_paths"] = emb_paths[part]
 
     return result_batch
+
+
+# TODO we actually do not need specific collate_fn for our task since all tensors have same shape
