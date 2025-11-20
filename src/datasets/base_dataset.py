@@ -9,13 +9,6 @@ from torch.utils.data import Dataset
 logger = logging.getLogger(__name__)
 
 
-def _choose_target_part():
-    if torch.rand(1).item() < 0.5:
-        return "s1"
-    else:
-        return "s2"
-
-
 class BaseDataset(Dataset):
     """
     Base class for the datasets.
@@ -117,10 +110,8 @@ class BaseDataset(Dataset):
                     )
         return instance_data
 
-    def _tss_getitem(self, data_dict):
+    def _tss_getitem(self, data_dict, target_spk):
         instance_data = {"len": data_dict["len"]}
-
-        target_spk = _choose_target_part()
 
         mix_path = data_dict["mix_path"]
         target_path = data_dict[f"{target_spk}_path"]
@@ -184,10 +175,10 @@ class BaseDataset(Dataset):
             instance_data (dict): dict, containing instance
                 (a single dataset element).
         """
-        data_dict = self._index[ind]
+        data_dict = self._index[ind // 2]
 
         if self.dataset_type == "tss":
-            instance_data = self._tss_getitem(data_dict)
+            instance_data = self._tss_getitem(data_dict, "s1" if ind % 2 == 0 else "s2")
         elif self.dataset_type == "bss":
             instance_data = self._bss_getitem(data_dict)
         else:
@@ -201,7 +192,12 @@ class BaseDataset(Dataset):
         """
         Get length of the dataset (length of the index).
         """
-        return len(self._index)
+        if self.dataset_type == "bss":
+            return len(self._index)
+        elif self.dataset_type == "tss":
+            return 2 * len(self._index)
+        else:
+            raise ValueError("dataset_type can be one of ('tss', 'bss')")
 
     def load_audio(self, path):
         audio_tensor, sr = torchaudio.load(path)

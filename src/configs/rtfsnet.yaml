@@ -9,6 +9,7 @@ defaults:
 optimizer:
   _target_: torch.optim.AdamW
   lr: 5e-5
+  weight_decay: 0.1
 lr_scheduler:
   _target_: torch.optim.lr_scheduler.OneCycleLR
   max_lr: 1e-3
@@ -31,8 +32,8 @@ video_encoder:
 
 trainer:
   log_step: 50
-  n_epochs: 15
-  epoch_len: 3000
+  n_epochs: 20
+  epoch_len: 6000
   device_tensors: ["target", "mix", "video_emb"] # which tensors should be on device (ex. GPU)
   resume_from: null # null or path to the checkpoint dir with *.pth and config.yaml
   device: cuda # device name or "auto"
