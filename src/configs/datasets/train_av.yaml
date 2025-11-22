@@ -6,6 +6,7 @@ train:
   calculate_len: False
   constant_len_value: 2
   dataset_type: "tss"
+  instance_transforms: ${transforms.instance_transforms.train}
 val:
   _target_: src.datasets.AVSSDataset
   partition: val
@@ -14,3 +15,4 @@ val:
   calculate_len: False
   constant_len_value: 2
   dataset_type: "tss"
+  instance_transforms: ${transforms.instance_transforms.inference}

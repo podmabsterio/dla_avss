@@ -110,6 +110,7 @@ data/
 input/
 saved/
 wandb/
+weights/
 .cometml-runs/
 outputs/
 

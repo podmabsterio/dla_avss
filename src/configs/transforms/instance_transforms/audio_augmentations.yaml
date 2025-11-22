@@ -1,0 +1,14 @@
+train:
+  whole_item: # special key which means that transform works with multiple fields in dataset item
+    _target_: torchvision.transforms.v2.Compose
+    transforms:
+      - _target_: src.transforms.audio.RandomBackgroundNoise
+        noises_dir: "data/noises"
+      - _target_: src.transforms.audio.RandomImpulseResponse
+        irs_dir: "data/mirs"
+      - _target_: src.transforms.audio.PeakNormalization
+inference:
+  whole_item: # special key which means that transform works with multiple fields in dataset item
+    _target_: torchvision.transforms.v2.Compose
+    transforms:
+      - _target_: src.transforms.audio.PeakNormalization
