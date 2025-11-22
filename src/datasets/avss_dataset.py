@@ -28,9 +28,7 @@ class AVSSDataset(BaseDataset):
             partition (str): partition name
             use_video_data (bool): if True tries to find video data in dataset directory
         """
-        index_path = (
-            ROOT_PATH / "data" / "avss_dataset" / "audio" / partition / "index.json"
-        )
+        index_path = ROOT_PATH / dataset_path / "audio" / partition / "index.json"
         dataset_path = Path(dataset_path)
 
         if not dataset_path.exists():

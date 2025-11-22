@@ -1,0 +1,5 @@
+inf:
+  _target_: src.datasets.AVSSDataset
+  partition: mini_train
+  dataset_path: data/avss_dataset_mini
+  use_video_data: true

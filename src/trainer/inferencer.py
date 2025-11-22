@@ -1,4 +1,8 @@
+import os
+from pathlib import Path
+
 import torch
+import torchaudio
 from tqdm.auto import tqdm
 
 from src.metrics.tracker import MetricTracker
@@ -21,6 +25,7 @@ class Inferencer(BaseTrainer):
         device,
         dataloaders,
         save_path,
+        sample_rate=16000,
         metrics=None,
         batch_transforms=None,
         skip_model_load=False,
@@ -55,6 +60,7 @@ class Inferencer(BaseTrainer):
         self.cfg_trainer = self.config.inferencer
 
         self.device = device
+        self.sample_rate = sample_rate
 
         self.model = model
         self.batch_transforms = batch_transforms
@@ -129,26 +135,32 @@ class Inferencer(BaseTrainer):
         # Some saving logic. This is an example
         # Use if you need to save predictions on disk
 
-        batch_size = batch["logits"].shape[0]
-        current_id = batch_idx * batch_size
+        batch_size = batch["preds"].shape[0]
 
         for i in range(batch_size):
             # clone because of
             # https://github.com/pytorch/pytorch/issues/1995
-            logits = batch["logits"][i].clone()
-            label = batch["labels"][i].clone()
-            pred_label = logits.argmax(dim=-1)
-
-            output_id = current_id + i
-
-            output = {
-                "pred_label": pred_label,
-                "label": label,
-            }
+            preds = batch["preds"][i].clone()
+            s1_pred = preds[:1]
+            s2_pred = preds[1:]
 
             if self.save_path is not None:
-                # you can use safetensors or other lib here
-                torch.save(output, self.save_path / part / f"output_{output_id}.pth")
+                s1_save_dir = Path(self.save_path) / part / "s1"
+                s2_save_dir = Path(self.save_path) / part / "s2"
+
+                os.makedirs(s1_save_dir, exist_ok=True)
+                os.makedirs(s2_save_dir, exist_ok=True)
+
+                torchaudio.save(
+                    uri=s1_save_dir / f"{Path(batch['s1_paths'][i]).stem}.wav",
+                    src=s1_pred,
+                    sample_rate=self.sample_rate,
+                )
+                torchaudio.save(
+                    uri=s2_save_dir / f"{Path(batch['s2_paths'][i]).stem}.wav",
+                    src=s2_pred,
+                    sample_rate=self.sample_rate,
+                )
 
         return batch
 

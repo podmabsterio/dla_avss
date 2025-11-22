@@ -129,3 +129,10 @@ class RTFSNet2SpeakersSeparation(BaseModel):
 
         preds = torch.cat([s1["preds"], s2["preds"]], dim=1)
         return {"preds": preds}
+
+    def load_state_dict(self, *args, **kwargs):
+        try:
+            return self.rtfs_net.load_state_dict(*args, **kwargs)
+        except Exception:
+            pass
+        return super().load_state_dict(*args, **kwargs)
