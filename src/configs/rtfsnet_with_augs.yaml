@@ -3,8 +3,8 @@ defaults:
   - writer: cometml
   - metrics: default
   - datasets: train_av
-  - dataloader: bs4
-  - transforms: only_peak_normalization
+  - dataloader: bs8
+  - transforms: audio_augmentations
   - _self_
 optimizer:
   _target_: torch.optim.AdamW
@@ -32,7 +32,7 @@ video_encoder:
 
 trainer:
   log_step: 50
-  n_epochs: 15
+  n_epochs: 10
   epoch_len: 12000
   device_tensors: ["target", "mix", "video_emb"] # which tensors should be on device (ex. GPU)
   resume_from: null # null or path to the checkpoint dir with *.pth and config.yaml
