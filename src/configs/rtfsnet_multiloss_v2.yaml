@@ -1,9 +1,9 @@
 defaults:
   - model: rtfsnet
-  - writer: cometml
+  - writer: cometml_multiloss
   - metrics: default
   - datasets: train_av
-  - dataloader: bs4
+  - dataloader: bs8
   - transforms: only_peak_normalization
   - _self_
 optimizer:
@@ -18,7 +18,14 @@ lr_scheduler:
   epochs: ${trainer.n_epochs}
   anneal_strategy: cos
 loss_function:
-  _target_: src.loss.SISNRLoss
+  _target_: src.loss.LossMix
+  loss1:
+    _target_: src.loss.ComplexSpecMappingMSELoss
+  loss1_name: "complex_spec_loss"
+  loss2:
+    _target_: src.loss.SISNRLoss
+  loss2_name: "si_snr_loss"
+  loss2_weight: 0.1
 video_encoder:
   prepare_embeddings: True
   weights_dir: "weights"
@@ -32,7 +39,7 @@ video_encoder:
 
 trainer:
   log_step: 50
-  n_epochs: 15
+  n_epochs: 10
   epoch_len: 12000
   device_tensors: ["target", "mix", "video_emb"] # which tensors should be on device (ex. GPU)
   resume_from: null # null or path to the checkpoint dir with *.pth and config.yaml
