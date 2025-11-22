@@ -1,6 +1,5 @@
-#!/bin/bash
+# Script to download noise and impulse response data for the 5th DNS Challenge (ICASSP 2023)
 
-# Check if target path is provided
 if [ $# -lt 1 ]; then
     echo "Error: Please provide a target directory to download files."
     echo "Usage: $0 /path/to/output_directory"
@@ -10,7 +9,6 @@ fi
 OUTPUT_PATH="$1"
 mkdir -p "$OUTPUT_PATH"
 
-# List of impulse responses
 IRS=(
     IR_AKGD12.wav
     IR_AKG_FaultyD12.wav

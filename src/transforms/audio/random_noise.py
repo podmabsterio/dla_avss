@@ -43,15 +43,15 @@ class RandomBackgroundNoise:
 
         self.transform.train()
 
-    def __call__(self, dict: Tensor) -> dict:
+    def __call__(self, item: Tensor) -> dict:
         if torch.rand(1).item() > self.p_apply:
-            return dict
+            return item
 
-        mix = dict["mix"]
+        mix = item["mix"]
         mix = mix.unsqueeze(0)
 
         augmented = self.transform(mix, sample_rate=self.sample_rate)
         augmented = torch.clamp(augmented, -1.0, 1.0)
-        dict["mix"] = augmented.squeeze(0)
+        item["mix"] = augmented.squeeze(0)
 
-        return dict
+        return item

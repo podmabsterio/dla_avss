@@ -38,12 +38,12 @@ class RandomImpulseResponse:
 
         self.transform.train()
 
-    def __call__(self, batch: dict) -> dict:
+    def __call__(self, item: dict) -> dict:
         if torch.rand(1).item() > self.p_apply:
-            return batch
+            return item
 
-        mix: Tensor = batch["mix"]
-        target: Tensor = batch["target"]
+        mix: Tensor = item["mix"]
+        target: Tensor = item["target"]
 
         combined = torch.cat([mix, target], dim=0)
         combined = combined.unsqueeze(0)
@@ -51,7 +51,7 @@ class RandomImpulseResponse:
         try:
             augmented = self.transform(combined, sample_rate=self.sample_rate)
         except Exception:
-            return batch
+            return item
 
         augmented = torch.clamp(augmented, -1.0, 1.0)
 
@@ -60,7 +60,7 @@ class RandomImpulseResponse:
         augmented_mix = augmented[:1, :]
         augmented_target = augmented[1:, :]
 
-        batch["mix"] = augmented_mix
-        batch["target"] = augmented_target
+        item["mix"] = augmented_mix
+        item["target"] = augmented_target
 
-        return batch
+        return item
