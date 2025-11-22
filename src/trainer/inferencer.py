@@ -65,14 +65,11 @@ class Inferencer(BaseTrainer):
         self.model = model
         self.batch_transforms = batch_transforms
 
-        # define dataloaders
-        self.evaluation_dataloaders = {k: v for k, v in dataloaders.items()}
-
-        # path definition
+        if dataloaders is not None:
+            self.evaluation_dataloaders = {k: v for k, v in dataloaders.items()}
 
         self.save_path = save_path
 
-        # define metrics
         self.metrics = metrics
         if self.metrics is not None:
             self.evaluation_metrics = MetricTracker(
@@ -83,7 +80,6 @@ class Inferencer(BaseTrainer):
             self.evaluation_metrics = None
 
         if not skip_model_load:
-            # init model
             self._from_pretrained(config.inferencer.get("from_pretrained"))
 
     def run_inference(self):
@@ -123,7 +119,7 @@ class Inferencer(BaseTrainer):
                 and model outputs.
         """
         batch = self.move_batch_to_device(batch)
-        batch = self.transform_batch(batch)  # transform batch on device -- faster
+        batch = self.transform_batch(batch)
 
         outputs = self.model(**batch)
         batch.update(outputs)
@@ -132,14 +128,9 @@ class Inferencer(BaseTrainer):
             for met in self.metrics["inference"]:
                 metrics.update(met.name, met(**batch))
 
-        # Some saving logic. This is an example
-        # Use if you need to save predictions on disk
-
         batch_size = batch["preds"].shape[0]
 
         for i in range(batch_size):
-            # clone because of
-            # https://github.com/pytorch/pytorch/issues/1995
             preds = batch["preds"][i].clone()
             s1_pred = preds[:1]
             s2_pred = preds[1:]
@@ -180,7 +171,6 @@ class Inferencer(BaseTrainer):
 
         self.evaluation_metrics.reset()
 
-        # create Save dir
         if self.save_path is not None:
             (self.save_path / part).mkdir(exist_ok=True, parents=True)
 

@@ -4,11 +4,10 @@ import hydra
 import torch
 from hydra.utils import instantiate
 
-from src.datasets.data_utils import get_dataloaders
+from src.datasets.data_utils import move_batch_transforms_to_device
 from src.trainer import Inferencer
 from src.utils.init_utils import set_random_seed
 from src.utils.io_utils import ROOT_PATH
-from src.video_preparation import create_video_embeddings_if_needed
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -30,8 +29,8 @@ def main(config):
     else:
         device = config.inferencer.device
 
-    create_video_embeddings_if_needed(device, config)
-    dataloaders, batch_transforms = get_dataloaders(config, device)
+    batch_transforms = instantiate(config.transforms.batch_transforms)
+    move_batch_transforms_to_device(batch_transforms, device)
 
     model = instantiate(config.model).to(device)
     print(model)
@@ -39,13 +38,12 @@ def main(config):
     metrics = instantiate(config.metrics)
 
     save_path = ROOT_PATH / config.inferencer.save_path
-    save_path.mkdir(exist_ok=True, parents=True)
 
     inferencer = Inferencer(
         model=model,
         config=config,
         device=device,
-        dataloaders=dataloaders,
+        dataloaders=None,
         batch_transforms=batch_transforms,
         save_path=save_path,
         metrics=metrics,
