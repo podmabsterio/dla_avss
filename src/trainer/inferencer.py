@@ -145,12 +145,12 @@ class Inferencer(BaseTrainer):
 
                 torchaudio.save(
                     uri=s1_save_dir / f"{stem}.wav",
-                    src=s1_pred,
+                    src=s1_pred.cpu(),
                     sample_rate=self.sample_rate,
                 )
                 torchaudio.save(
                     uri=s2_save_dir / f"{stem}.wav",
-                    src=s2_pred,
+                    src=s2_pred.cpu(),
                     sample_rate=self.sample_rate,
                 )
 
