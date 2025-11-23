@@ -1,147 +1,307 @@
-# PyTorch Template for DL projects
-
-
+# Audio-Visual Speech Separation with RTFSNet and ConvTasNet
 
 <p align="center">
   <a href="#about">About</a> •
-  <a href="#tutorials">Tutorials</a> •
-  <a href="#examples">Examples</a> •
+  <a href="#models">Models</a> •
   <a href="#installation">Installation</a> •
-  <a href="#how-to-use">How To Use</a> •
-  <a href="#useful-links">Useful Links</a> •
-  <a href="#credits">Credits</a> •
-  <a href="#license">License</a>
+  <a href="#data-and-assets">Data & Assets</a> •
+  <a href="#training">Training</a> •
+  <a href="#inference">Inference</a> •
+  <a href="#metrics">Metrics</a> •
+  <a href="#hydra-configs">Hydra Configs</a>
 </p>
 
-<p align="center">
-<a href="https://github.com/Blinorot/pytorch_project_template/generate">
-  <img src="https://img.shields.io/badge/use%20this-template-green?logo=github">
-</a>
-<a href="https://github.com/Blinorot/pytorch_project_template/blob/main/LICENSE">
-   <img src=https://img.shields.io/badge/license-MIT-blue.svg>
-</a>
-<a href="https://github.com/Blinorot/pytorch_project_template/blob/main/CITATION.cff">
-   <img src="https://img.shields.io/badge/cite-this%20repo-purple">
-</a>
-</p>
+---
 
 ## About
 
-This repository contains a template for [PyTorch](https://pytorch.org/)-based Deep Learning projects.
+This repository contains experiments on **Audio-Visual Speech Separation (AVSS)**.
 
-The template utilizes different python-dev techniques to improve code readability. Configuration methods enhance reproducibility and experiments control.
+We use:
 
-The repository is released as a part of the [HSE DLA course](https://github.com/markovka17/dla), however, can easily be adopted for any DL-task.
+- **ConvTasNet** as a *baseline* purely audio model.
+- **RTFSNet** as the **main audio-visual separation model**.
 
-This template is the official recommended template for the [EPFL CS-433 ML Course](https://www.epfl.ch/labs/mlo/machine-learning-cs-433/).
+RTFSNet consumes **video embeddings** of the speaker’s mouth region.
+To obtain them, we use a pretrained lipreading video encoder from:
 
-> 📖 **If you use this template in your work, please cite this repository or include a reference. Attribution supports the project and encourages continued development.**
+> https://github.com/mpc001/Lipreading_using_Temporal_Convolutional_Networks
 
-## Tutorials
+Before training RTFSNet, we **precompute all video embeddings and store them on disk**.
+This avoids recomputing the encoder on every epoch and significantly speeds up training and inference.
 
-This template utilizes experiment tracking techniques, such as [WandB](https://docs.wandb.ai/) and [Comet ML](https://www.comet.com/docs/v2/), and [Hydra](https://hydra.cc/docs/intro/) for the configuration. It also automatically reformats code and conducts several checks via [pre-commit](https://pre-commit.com/). If you are not familiar with these tools, we advise you to look at the tutorials below:
+The codebase is built on top of the PyTorch project template (Hydra configs, experiment tracking, etc.), but adapted specifically for AVSS experiments.
 
-- [Python Dev Tips](https://github.com/ebezzam/python-dev-tips): information about [Git](https://git-scm.com/doc), [pre-commit](https://pre-commit.com/), [Hydra](https://hydra.cc/docs/intro/), and other stuff for better Python code development. The YouTube recording of the workshop is available [here](https://youtu.be/okxaTuBdDuY).
+---
 
-- [Seminar on R&D Coding 2025](https://youtu.be/PE1zaW5it_A): Seminar from the [LauzHack Deep Learning Bootcamp](https://github.com/LauzHack/deep-learning-bootcamp/) with discussion on logging, project-based coding, configuration, and reproducibility. The materials can be found [here](https://github.com/LauzHack/deep-learning-bootcamp/tree/summer25/day05).
+## Models
 
-- [Seminar on R&D Coding 2024](https://youtu.be/sEA-Js5ZHxU): Seminar from the [LauzHack Deep Learning Bootcamp](https://github.com/LauzHack/deep-learning-bootcamp/) with template discussion and reasoning. It also explains how to work with [WandB](https://docs.wandb.ai/). The seminar materials can be found [here](https://github.com/LauzHack/deep-learning-bootcamp/blob/main/day03/Seminar_WandB_and_Coding.ipynb).
+### ConvTasNet (baseline)
 
-- [HSE DLA Course Introduction Week](https://github.com/markovka17/dla/tree/2024/week01): combines the two seminars above into one with some updates, including an extra example for [Comet ML](https://www.comet.com/docs/v2/).
+- Audio-only separation model.
+- Used as a strong baseline for comparison with AVSS approaches.
+- Pretrained weights can be downloaded via `scripts/download_convtasnet.sh`.
+- Training / inference / evaluation are controlled via ConvTasNet-specific Hydra configs (see below).
 
-- [PyTorch Basics](https://github.com/markovka17/dla/tree/2024/week01/intro_to_pytorch): several notebooks with [PyTorch](https://pytorch.org/docs/stable/index.html) basics and corresponding seminar recordings from the [LauzHack Deep Learning Bootcamp](https://github.com/LauzHack/deep-learning-bootcamp/).
+### RTFSNet (main model)
 
-To start working with a template, just click on the `use this template` button.
+- Audio-Visual speech separation network.
+- Takes as input:
+  - mixture waveform,
+  - video embeddings of speaker 1 and speaker 2.
+- Uses a **pretrained lipreading video encoder** to extract embeddings from mouth crops.
+- For efficiency, all video embeddings are **precomputed and cached to disk** before RTFSNet training.
 
-<a href="https://github.com/Blinorot/pytorch_project_template/generate">
-  <img src="https://img.shields.io/badge/use%20this-template-green?logo=github">
-</a>
+Pretrained weights of the best RTFSNet model can be downloaded via `scripts/download_rtfsnet.sh`.
 
-You can choose any of the branches as a starting point. [Set your choice as the default branch](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-branches-in-your-repository/changing-the-default-branch) in the repository settings. You can also [delete unnecessary branches](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-and-deleting-branches-within-your-repository).
-
-## Examples
-
-> [!IMPORTANT]
-> The main branch leaves some of the code parts empty or fills them with dummy examples, showing just the base structure. The final users can add code required for their own tasks.
-
-You can find examples of this template completed for different tasks in other branches:
-
-- [Image classification](https://github.com/Blinorot/pytorch_project_template/tree/example/image-classification): simple classification problem on [MNIST](https://yann.lecun.com/exdb/mnist/) and [CIFAR-10](https://www.cs.toronto.edu/~kriz/cifar.html) datasets.
-
-- [ASR](https://github.com/Blinorot/pytorch_project_template/tree/example/asr): template for the automatic speech recognition (ASR) task. Some of the parts (for example, `collate_fn` and beam search for `text_encoder`) are missing for studying purposes of [HSE DLA course](https://github.com/markovka17/dla).
+---
 
 ## Installation
 
-Installation may depend on your task. The general steps are the following:
+### 0. (Optional) Create a new environment
 
-0. (Optional) Create and activate new environment using [`conda`](https://conda.io/projects/conda/en/latest/user-guide/getting-started.html) or `venv` ([`+pyenv`](https://github.com/pyenv/pyenv)).
-
-   a. `conda` version:
-
-   ```bash
-   # create env
-   conda create -n project_env python=PYTHON_VERSION
-
-   # activate env
-   conda activate project_env
-   ```
-
-   b. `venv` (`+pyenv`) version:
-
-   ```bash
-   # create env
-   ~/.pyenv/versions/PYTHON_VERSION/bin/python3 -m venv project_env
-
-   # alternatively, using default python version
-   python3 -m venv project_env
-
-   # activate env
-   source project_env/bin/activate
-   ```
-
-1. Install all required packages
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-2. Install `pre-commit`:
-   ```bash
-   pre-commit install
-   ```
-
-## How To Use
-
-To train a model, run the following command:
+Using `conda`:
 
 ```bash
-python3 train.py -cn=CONFIG_NAME HYDRA_CONFIG_ARGUMENTS
+conda create -n avss_env python=PYTHON_VERSION
+conda activate avss_env
 ```
 
-Where `CONFIG_NAME` is a config from `src/configs` and `HYDRA_CONFIG_ARGUMENTS` are optional arguments.
-
-To run inference (evaluate the model or save predictions):
+Using `venv` (optionally with `pyenv`):
 
 ```bash
-python3 inference.py HYDRA_CONFIG_ARGUMENTS
+python3 -m venv avss_env
+source avss_env/bin/activate
 ```
 
-## Useful Links:
+### 1. Install Python dependencies
 
-You may find the following links useful:
+```bash
+pip install -r requirements.txt
+```
 
-- [Report branch](https://github.com/Blinorot/pytorch_project_template/tree/report): Guidelines for writing a scientific report/paper (with an emphasis on DL projects).
+### 2. (Optional) Install pre-commit hooks
 
-- [CLAIRE Template](https://github.com/CLAIRE-Labo/python-ml-research-template): additional template by [EPFL CLAIRE Laboratory](https://www.epfl.ch/labs/claire/) that can be combined with ours to enhance experiments reproducibility via [Docker](https://www.docker.com/).
+```bash
+pre-commit install
+```
 
-- [Mamba](https://github.com/mamba-org/mamba) and [Poetry](https://python-poetry.org/): alternatives to [Conda](https://conda.io/projects/conda/en/latest/user-guide/getting-started.html) and [pip](https://pip.pypa.io/en/stable/installation/) package managers given above.
+This enables automatic formatting and basic checks before each commit.
 
-- [Awesome README](https://github.com/matiassingers/awesome-readme): a list of awesome README files for inspiration. Check the basics [here](https://github.com/PurpleBooth/a-good-readme-template).
+---
 
-## Credits
+## Data and Assets
 
-This repository is based on a heavily modified fork of [pytorch-template](https://github.com/victoresque/pytorch-template) and [asr_project_template](https://github.com/WrathOfGrapes/asr_project_template) repositories.
+This repository provides helper scripts in the `scripts/` folder to download all required assets.
 
-## License
+### Microphone Impulse Responses
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](/LICENSE)
+```bash
+bash scripts/download_mirs.sh OUT_DIR
+```
+
+* Downloads **microphone impulse responses** (IRs).
+* Used to simulate realistic room/microphone acoustics during training.
+
+### Noise Datasets
+
+```bash
+bash scripts/download_noises.sh OUT_DIR
+```
+
+* Downloads **noise recordings** (e.g. DNS Challenge noises).
+* Used to generate noisy mixtures for training and evaluation.
+
+### Pretrained Models
+
+```bash
+bash scripts/download_convtasnet.sh OUT_DIR
+```
+
+* Downloads pretrained **ConvTasNet** baseline weights.
+
+```bash
+bash scripts/download_rtfsnet.sh OUT_DIR
+```
+
+* Downloads weights of the **best trained RTFSNet** model.
+
+```bash
+bash scripts/download_video_encoder.sh OUT_DIR
+```
+
+* Downloads the **pretrained lipreading video encoder**
+  (originally from `Lipreading_using_Temporal_Convolutional_Networks`).
+* These weights are used to compute **video embeddings** that are later passed to RTFSNet.
+* In typical workflow we:
+
+  1. Run a preprocessing script that computes embeddings for all videos in the dataset.
+  2. Save them to disk.
+  3. Use these cached embeddings during RTFSNet training and inference.
+
+---
+
+## Training
+
+All training scripts are driven by **Hydra configs** under `src/configs/`.
+
+General pattern:
+
+```bash
+python train.py -cn=CONFIG_NAME HYDRA_OVERRIDES
+```
+
+Where:
+
+* `CONFIG_NAME` is one of the training configs listed in [Hydra Configs](#hydra-configs).
+* `HYDRA_OVERRIDES` are optional command-line overrides, e.g. `trainer.max_epochs=50`.
+
+### Training scripts
+
+`train.py`
+Main training entrypoint. It:
+
+* Instantiates the dataset, model, loss functions, optimizers, and schedulers from Hydra config.
+* Runs the full training loop.
+* Logs metrics and saves checkpoints according to the configuration.
+
+---
+
+## Inference
+
+Inference is also launched via Hydra:
+
+```bash
+python inference.py -cn=CONFIG_NAME HYDRA_OVERRIDES
+```
+
+`inference.py` supports:
+
+* Running separation on a dataset split (`train` / `val` / `test` / custom partition).
+* Saving separated sources (predictions) to disk (e.g. into `predictions/`).
+* Optionally computing metrics during inference if ground truth is available.
+
+Key script:
+
+`inference.py`
+
+* Loads a pretrained model (ConvTasNet or RTFSNet, depending on config).
+* Iterates over the dataset and writes separated signals to disk via `torchaudio.save`.
+* Uses `inferencer.save_path` (Hydra config) as the root folder for predictions.
+
+Before running inference, it is often convenient to clear previous predictions, e.g.:
+
+```python
+import os, shutil
+if os.path.exists("predictions"):
+    shutil.rmtree("predictions")
+```
+
+---
+
+## Metrics
+
+If ground-truth sources are available and you want to evaluate saved predictions **after** running inference, use:
+
+```bash
+python calc_metrics.py -cn=CONFIG_NAME HYDRA_OVERRIDES
+```
+
+`calc_metrics.py`:
+
+* Loads predictions and corresponding ground truth from disk.
+* Computes separation metrics (e.g. SI-SNR, SI-SDR, PIT-based metrics) depending on the config.
+* Is especially useful if you:
+
+  * already have predictions saved from a previous run, and
+  * later obtained ground truth sources for them.
+
+---
+
+## Hydra Configs
+
+All configs are stored in `src/configs/`. Below is a brief description of each key config file.
+
+### Inference configs
+
+* **`inf_convtasnet.yaml`**
+  Inference configuration for the **ConvTasNet** baseline.
+
+  * Sets up ConvTasNet model, dataset, and inference parameters.
+  * Use with `inference.py` to save ConvTasNet predictions.
+
+* **`inf_rtfsnet.yaml`**
+  Inference configuration for **RTFSNet**.
+
+  * Uses the RTFSNet model with precomputed **video embeddings**.
+  * Includes paths to the dataset and the video embeddings directory.
+  * Example:
+
+    ```bash
+    python inference.py -cn=inf_rtfsnet.yaml inferencer.from_pretrained=weights/rtfsnet.pth
+    ```
+
+### Metrics configs
+
+* **`calc_metrics_convtasnet.yaml`**
+  Configuration for **metrics computation** for ConvTasNet predictions.
+
+  * Points to folders with ground truth (`gt_dir`) and ConvTasNet predictions (`pred_dir`).
+  * Defines which BSS metrics to compute (e.g. SI-SNR, SDR, PIT).
+
+* **`calc_metrics_rtfsnet.yaml`**
+  Configuration for **metrics computation** for RTFSNet predictions.
+
+  * Similar to `calc_metrics_convtasnet.yaml`, but assumes RTFSNet output layout.
+
+### Training configs
+
+* **`train_convtasnet.yaml`**
+  Training configuration for the **baseline ConvTasNet** model.
+
+  * Defines dataset, optimizer, learning rate schedule, and loss (typically SI-SNR-based).
+  * This is the config used to train our baseline.
+
+* **`train_rtfsnet.yaml`**
+  **Main training configuration for RTFSNet.**
+
+  * Uses precomputed video embeddings as input.
+  * Trains RTFSNet with the primary loss (e.g. SI-SNR).
+  * This is the default config for training the main AVSS model.
+
+* **`train_rtfsnet_multiloss.yaml`**
+  RTFSNet training with **additional spectral loss**.
+
+  * Combines SI-SNR loss in the time domain with a spectrogram-based loss (e.g. L1/L2 on magnitude or log-magnitude STFT).
+  * Used to study whether spectral regularization improves perceptual quality or robustness.
+
+* **`train_rtfsnet_pit.yaml`**
+  RTFSNet training with **PIT (Permutation Invariant Training)** in a BSS setting.
+
+  * The objective is invariant to the ordering of separated speakers.
+  * Useful when the speaker identities are not fixed or when training on mixtures without explicit speaker labeling.
+
+* **`train_rtfsnet_with_augs.yaml`**
+  RTFSNet training with **data augmentations**.
+
+  * Makes use of noise injection, impulse responses, and other augmentations (e.g. `RandomBackgroundNoise`, `RandomImpulseResponse`).
+  * Aimed at improving robustness to real-world acoustic conditions.
+
+---
+
+## How to Start
+
+1. **Install the environment** using the steps in [Installation](#installation).
+2. **Download assets** (noises, IRs, pretrained models, video encoder) using scripts in [Data and Assets](#data-and-assets).
+3. **Precompute video embeddings** using the downloaded video encoder (see repo’s notebooks/scripts for details).
+4. **Train a model**:
+
+   * Baseline: `python train.py -cn=train_convtasnet.yaml`
+   * AVSS: `python train.py -cn=train_rtfsnet.yaml`
+5. **Run inference**:
+
+   * ConvTasNet: `python inference.py -cn=inf_convtasnet.yaml`
+   * RTFSNet: `python inference.py -cn=inf_rtfsnet.yaml inferencer.from_pretrained=weights/rtfsnet.pth`
+6. **Compute metrics** (if you have ground truth):
+
+   * `python calc_metrics.py -cn=calc_metrics_rtfsnet.yaml`
