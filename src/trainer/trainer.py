@@ -1,3 +1,4 @@
+from src.datasets.data_utils import transform_batch
 from src.metrics.tracker import MetricTracker
 from src.trainer.base_trainer import BaseTrainer
 
@@ -31,7 +32,9 @@ class Trainer(BaseTrainer):
                 model outputs, and losses.
         """
         batch = self.move_batch_to_device(batch)
-        batch = self.transform_batch(batch)  # transform batch on device -- faster
+        batch = transform_batch(
+            self.batch_transforms, batch, "train" if self.is_train else "inference"
+        )
 
         metric_funcs = self.metrics["inference"]
         if self.is_train:

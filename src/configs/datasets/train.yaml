@@ -1,8 +1,18 @@
 train:
   _target_: src.datasets.AVSSDataset
   partition: train
+  use_video_data: True
+  expect_target: True
+  calculate_len: False
+  constant_len_value: 2
+  dataset_type: "bss"
   instance_transforms: ${transforms.instance_transforms.train}
 val:
   _target_: src.datasets.AVSSDataset
   partition: val
+  use_video_data: True
+  expect_target: True
+  calculate_len: False
+  constant_len_value: 2
+  dataset_type: "bss"
   instance_transforms: ${transforms.instance_transforms.inference}

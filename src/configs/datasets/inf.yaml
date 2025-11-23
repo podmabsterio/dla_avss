@@ -1,0 +1,5 @@
+inf:
+  _target_: src.datasets.AVSSDataset
+  partition: null # provide partition if your dataset has
+  dataset_path: null # provide path to dataset
+  expect_target: true # provide False if your dataset has no ground truth

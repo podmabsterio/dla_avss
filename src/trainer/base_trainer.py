@@ -351,32 +351,8 @@ class BaseTrainer:
                 the dataloader with some of the tensors on the device.
         """
         for tensor_for_device in self.cfg_trainer.device_tensors:
-            batch[tensor_for_device] = batch[tensor_for_device].to(self.device)
-        return batch
-
-    def transform_batch(self, batch):
-        """
-        Transforms elements in batch. Like instance transform inside the
-        BaseDataset class, but for the whole batch. Improves pipeline speed,
-        especially if used with a GPU.
-
-        Each tensor in a batch undergoes its own transform defined by the key.
-
-        Args:
-            batch (dict): dict-based batch containing the data from
-                the dataloader.
-        Returns:
-            batch (dict): dict-based batch containing the data from
-                the dataloader (possibly transformed via batch transform).
-        """
-        # do batch transforms on device
-        transform_type = "train" if self.is_train else "inference"
-        transforms = self.batch_transforms.get(transform_type)
-        if transforms is not None:
-            for transform_name in transforms.keys():
-                batch[transform_name] = transforms[transform_name](
-                    batch[transform_name]
-                )
+            if tensor_for_device in batch:
+                batch[tensor_for_device] = batch[tensor_for_device].to(self.device)
         return batch
 
     def _clip_grad_norm(self):

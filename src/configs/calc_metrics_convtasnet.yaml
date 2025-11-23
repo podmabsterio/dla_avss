@@ -1,0 +1,11 @@
+defaults:
+  - metrics: pit
+  - transforms: only_peak_normalization
+  - dataloader: bs4
+  - _self_
+
+metric_calculator:
+  device: auto
+  gt_path: null # provide path to dir with ground truth
+  pred_path: null # provide path to dir with predictions
+  seed: 1

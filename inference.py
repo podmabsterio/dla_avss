@@ -8,6 +8,7 @@ from src.datasets.data_utils import get_dataloaders
 from src.trainer import Inferencer
 from src.utils.init_utils import set_random_seed
 from src.utils.io_utils import ROOT_PATH
+from src.video_preparation import create_video_embeddings_if_needed
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -29,19 +30,15 @@ def main(config):
     else:
         device = config.inferencer.device
 
-    # setup data_loader instances
-    # batch_transforms should be put on device
+    create_video_embeddings_if_needed(device, config)
     dataloaders, batch_transforms = get_dataloaders(config, device)
 
-    # build model architecture, then print to console
     model = instantiate(config.model).to(device)
     print(model)
 
-    # get metrics
     metrics = instantiate(config.metrics)
 
-    # save_path for model predictions
-    save_path = ROOT_PATH / "data" / "saved" / config.inferencer.save_path
+    save_path = ROOT_PATH / config.inferencer.save_path
     save_path.mkdir(exist_ok=True, parents=True)
 
     inferencer = Inferencer(
@@ -60,7 +57,7 @@ def main(config):
     for part in logs.keys():
         for key, value in logs[part].items():
             full_key = part + "_" + key
-            print(f"    {full_key:15s}: {value}")
+            print(f"    {full_key}: {value}")
 
 
 if __name__ == "__main__":

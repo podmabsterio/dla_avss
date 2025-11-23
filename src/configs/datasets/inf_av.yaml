@@ -1,0 +1,6 @@
+inf:
+  _target_: src.datasets.AVSSDataset
+  partition: null # provide partition if your dataset has
+  dataset_path: # provide path to dataset
+  use_video_data: true
+  expect_target: true # provide False if your dataset has no ground truth
