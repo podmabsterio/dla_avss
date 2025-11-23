@@ -6,6 +6,8 @@ import torch
 import torchaudio
 from torch.utils.data import Dataset
 
+from src.datasets.data_utils import apply_instance_transorms
+
 logger = logging.getLogger(__name__)
 
 
@@ -185,7 +187,9 @@ class BaseDataset(Dataset):
         else:
             raise ValueError("dataset_type can be one of ('tss', 'bss')")
 
-        instance_data = self.preprocess_data(instance_data)
+        instance_data = apply_instance_transorms(
+            self.instance_transforms, instance_data
+        )
 
         return instance_data
 
@@ -207,33 +211,6 @@ class BaseDataset(Dataset):
         if sr != target_sr:
             audio_tensor = torchaudio.functional.resample(audio_tensor, sr, target_sr)
         return audio_tensor
-
-    def preprocess_data(self, instance_data):
-        """
-        Preprocess data with instance transforms.
-
-        Each tensor in a dict undergoes its own transform defined by the key.
-
-        Args:
-            instance_data (dict): dict, containing instance
-                (a single dataset element).
-        Returns:
-            instance_data (dict): dict, containing instance
-                (a single dataset element) (possibly transformed via
-                instance transform).
-        """
-        if self.instance_transforms is not None:
-            for key_to_apply_transform in self.instance_transforms.keys():
-                if key_to_apply_transform == "whole_item":
-                    instance_data = self.instance_transforms[key_to_apply_transform](
-                        instance_data
-                    )
-                else:
-                    instance_data[key_to_apply_transform] = self.instance_transforms[
-                        key_to_apply_transform
-                    ](instance_data[key_to_apply_transform])
-
-        return instance_data
 
     @staticmethod
     def _filter_records_from_dataset(

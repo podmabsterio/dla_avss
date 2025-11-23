@@ -5,6 +5,7 @@ import torch
 import torchaudio
 from tqdm.auto import tqdm
 
+from src.datasets.data_utils import transform_batch
 from src.metrics.tracker import MetricTracker
 from src.trainer.base_trainer import BaseTrainer
 
@@ -96,7 +97,7 @@ class Inferencer(BaseTrainer):
             part_logs[part] = logs
         return part_logs
 
-    def process_batch(self, batch_idx, batch, metrics, part):
+    def process_batch(self, batch, metrics, part):
         """
         Run batch through the model, compute metrics, and
         save predictions to disk.
@@ -105,7 +106,6 @@ class Inferencer(BaseTrainer):
         config and current partition.
 
         Args:
-            batch_idx (int): the index of the current batch.
             batch (dict): dict-based batch containing the data from
                 the dataloader.
             metrics (MetricTracker): MetricTracker object that computes
@@ -119,7 +119,7 @@ class Inferencer(BaseTrainer):
                 and model outputs.
         """
         batch = self.move_batch_to_device(batch)
-        batch = self.transform_batch(batch)
+        batch = transform_batch(self.batch_transforms, batch, "inference")
 
         outputs = self.model(**batch)
         batch.update(outputs)
@@ -175,13 +175,12 @@ class Inferencer(BaseTrainer):
             (self.save_path / part).mkdir(exist_ok=True, parents=True)
 
         with torch.no_grad():
-            for batch_idx, batch in tqdm(
-                enumerate(dataloader),
+            for batch in tqdm(
+                dataloader,
                 desc=part,
                 total=len(dataloader),
             ):
                 batch = self.process_batch(
-                    batch_idx=batch_idx,
                     batch=batch,
                     part=part,
                     metrics=self.evaluation_metrics,

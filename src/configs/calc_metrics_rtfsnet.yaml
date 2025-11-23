@@ -1,13 +1,11 @@
 defaults:
-  - model: rtfsnet_pit
   - metrics: pit
   - transforms: only_peak_normalization
   - dataloader: bs4
   - _self_
 
-inferencer:
+metric_calculator:
   device: auto
   gt_path: "data/avss_dataset_mini/audio/mini_train"
   pred_path: "data/mini_done/inf"
   seed: 1
-  from_pretrained: "saved/rtfsnet_bs8/model_best.pth"

@@ -43,6 +43,43 @@ def move_batch_transforms_to_device(batch_transforms, device):
                 transforms[transform_name] = transforms[transform_name].to(device)
 
 
+def apply_instance_transorms(instance_transforms, instance_data):
+    """
+    Preprocess data with instance transforms.
+
+    Each tensor in a dict undergoes its own transform defined by the key.
+
+    Args:
+        instance_transforms (dict): dict of callable
+        instance_data (dict): dict, containing instance
+            (a single dataset element).
+    Returns:
+        instance_data (dict): dict, containing instance
+            (a single dataset element) (possibly transformed via
+            instance transform).
+    """
+    if instance_transforms is not None:
+        for key_to_apply_transform in instance_transforms.keys():
+            if key_to_apply_transform == "whole_item":
+                instance_data = instance_transforms[key_to_apply_transform](
+                    instance_data
+                )
+            else:
+                instance_data[key_to_apply_transform] = instance_transforms[
+                    key_to_apply_transform
+                ](instance_data[key_to_apply_transform])
+
+    return instance_data
+
+
+def transform_batch(batch_transforms, batch, transform_type):
+    transforms = batch_transforms.get(transform_type)
+    if transforms is not None:
+        for transform_name in transforms.keys():
+            batch[transform_name] = transforms[transform_name](batch[transform_name])
+    return batch
+
+
 def get_dataloaders(config, device):
     """
     Create dataloaders for each of the dataset partitions.
