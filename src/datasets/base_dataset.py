@@ -23,6 +23,7 @@ class BaseDataset(Dataset):
     def __init__(
         self,
         index,
+        expect_target=True,
         use_video_data=False,
         dataset_type="bss",
         target_sr=16000,
@@ -51,6 +52,8 @@ class BaseDataset(Dataset):
         self.use_video_data = use_video_data
         self.dataset_type = dataset_type
 
+        self.expect_target = expect_target
+
         self._assert_index_is_valid(index)
 
         index = self._filter_records_from_dataset(index, max_audio_length)
@@ -66,7 +69,8 @@ class BaseDataset(Dataset):
     def _bss_getitem(self, data_dict):
         instance_data = {"len": data_dict["len"]}
 
-        for part in ["s1", "s2", "mix"]:
+        parts = ["s1", "s2", "mix"] if self.expect_target else ["mix"]
+        for part in parts:
             path_key = f"{part}_path"
             audio_path = data_dict[path_key]
             audio = self.load_audio(audio_path)
@@ -267,11 +271,12 @@ class BaseDataset(Dataset):
                 the dataset. The dict has required metadata information,
                 such as label and object path.
         """
+        required_parts = ["s1", "s2", "mix"] if self.expect_target else ["mix"]
         for entry in index:
-            for part in ["s1", "s2", "mix"]:
+            for part in required_parts:
                 assert (
                     f"{part}_path" in entry
-                ), "Each dataset item should include field '{part}_path' - path to {part} audio file."
+                ), f"Each dataset item should include field '{part}_path' - path to {part} audio file."
 
             assert "len" in entry, (
                 "Each dataset item should include field 'len'"

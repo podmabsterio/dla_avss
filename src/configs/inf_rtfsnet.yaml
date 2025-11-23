@@ -1,7 +1,7 @@
 defaults:
   - model: rtfsnet_pit
   - metrics: pit
-  - datasets: inf
+  - datasets: inf_av
   - dataloader: bs4
   - transforms: only_peak_normalization
   - _self_
@@ -14,11 +14,11 @@ video_encoder:
     batch_size: 1
     num_workers: 0
     pin_memory: True
-  dataset_path: "data/avss_dataset_mini"
+  dataset_path: null # provide path to your dataset with mouths
 
 inferencer:
   device_tensors: ["target", "mix"]
   device: auto
-  save_path: "data/mini_done"
+  save_path: null # provide path to dir with results
   seed: 1
-  from_pretrained: "saved/rtfsnet_bs8/model_best.pth"
+  from_pretrained: null # provide path to checkpoint

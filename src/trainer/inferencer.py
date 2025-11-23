@@ -136,6 +136,7 @@ class Inferencer(BaseTrainer):
             s2_pred = preds[1:]
 
             if self.save_path is not None:
+                stem = Path(batch["mix_paths"][i]).stem
                 s1_save_dir = Path(self.save_path) / part / "s1"
                 s2_save_dir = Path(self.save_path) / part / "s2"
 
@@ -143,12 +144,12 @@ class Inferencer(BaseTrainer):
                 os.makedirs(s2_save_dir, exist_ok=True)
 
                 torchaudio.save(
-                    uri=s1_save_dir / f"{Path(batch['s1_paths'][i]).stem}.wav",
+                    uri=s1_save_dir / f"{stem}.wav",
                     src=s1_pred,
                     sample_rate=self.sample_rate,
                 )
                 torchaudio.save(
-                    uri=s2_save_dir / f"{Path(batch['s2_paths'][i]).stem}.wav",
+                    uri=s2_save_dir / f"{stem}.wav",
                     src=s2_pred,
                     sample_rate=self.sample_rate,
                 )

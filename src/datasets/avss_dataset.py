@@ -1,7 +1,6 @@
 from pathlib import Path
+from typing import Optional
 
-import numpy as np
-import torch
 import torchaudio
 from tqdm.auto import tqdm
 
@@ -12,7 +11,7 @@ from src.utils.io_utils import ROOT_PATH, read_json, write_json
 class AVSSDataset(BaseDataset):
     def __init__(
         self,
-        partition: str,
+        partition: Optional[str] = None,
         expect_target=True,
         calculate_len=True,
         constant_len_value=None,
@@ -28,7 +27,13 @@ class AVSSDataset(BaseDataset):
             partition (str): partition name
             use_video_data (bool): if True tries to find video data in dataset directory
         """
-        index_path = ROOT_PATH / dataset_path / "audio" / partition / "index.json"
+        if partition == float("inf"):
+            partition = "inf"
+        if partition is not None:
+            index_path = ROOT_PATH / dataset_path / "audio" / partition / "index.json"
+        else:
+            index_path = ROOT_PATH / dataset_path / "audio" / "index.json"
+
         dataset_path = Path(dataset_path)
 
         if not dataset_path.exists():
@@ -53,12 +58,18 @@ class AVSSDataset(BaseDataset):
                 calculate_len,
                 constant_len_value,
             )
-        super().__init__(index, *args, use_video_data=use_video_data, **kwargs)
+        super().__init__(
+            index,
+            *args,
+            expect_target=expect_target,
+            use_video_data=use_video_data,
+            **kwargs,
+        )
 
     def _create_index(
         self,
         dataset_path: Path,
-        partition: str,
+        partition: Optional[str],
         use_video_data: bool,
         index_path: Path,
         expect_target,
@@ -84,8 +95,11 @@ class AVSSDataset(BaseDataset):
                 such as label and object path.
         """
         index = []
+        if partition is not None:
+            data_path = dataset_path / "audio" / partition
+        else:
+            data_path = dataset_path / "audio"
 
-        data_path = dataset_path / "audio" / partition
         s1_path = data_path / "s1"
         s2_path = data_path / "s2"
         mix_path = data_path / "mix"

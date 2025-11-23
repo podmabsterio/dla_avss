@@ -1,0 +1,14 @@
+defaults:
+  - model: convtasnet
+  - metrics: pit
+  - datasets: inf_convtasnet_example
+  - dataloader: bs4
+  - transforms: only_peak_normalization
+  - _self_
+
+inferencer:
+  device_tensors: ["target", "mix"]
+  device: auto
+  save_path: null # provide path to dir with results
+  seed: 1
+  from_pretrained: null # provide path to checkpoint
