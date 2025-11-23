@@ -17,7 +17,7 @@ video_encoder:
   dataset_path: null # provide path to your dataset with mouths
 
 inferencer:
-  device_tensors: ["target", "mix"]
+  device_tensors: ["target", "mix", "s1_video_emb", "s2_video_emb"]
   device: auto
   save_path: null # provide path to dir with results
   seed: 1
