@@ -191,7 +191,11 @@ class Inferencer(BaseTrainer):
             s1_save_dir = Path(self.save_path) / part / "s1"
             s2_save_dir = Path(self.save_path) / part / "s2"
 
-            tqdm.write(f"s1 save dir for {part} part: {s1_save_dir}")
-            tqdm.write(f"s2 save dir for {part} part: {s2_save_dir}")
+            tqdm.write(
+                f'Part "{part}" saved:\n'
+                f'   ├─ Speaker 1 → {s1_save_dir}\n'
+                f'   └─ Speaker 2 → {s2_save_dir}'
+            )
+
 
         return self.evaluation_metrics.result()
