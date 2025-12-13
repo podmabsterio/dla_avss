@@ -197,5 +197,4 @@ class Inferencer(BaseTrainer):
                 f'   └─ Speaker 2 → {s2_save_dir}'
             )
 
-
         return self.evaluation_metrics.result()
